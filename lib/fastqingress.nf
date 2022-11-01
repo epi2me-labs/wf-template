@@ -93,13 +93,19 @@ def find_fastq(pattern, maxdepth)
  *
  *
  * @param input_directory Top level input folder to locate sub directories
+ * @param unclassified Keep unclassified directory
+ *
  * @return A list containing sublists of barcode and non_barcode sub directories
  */
-def get_subdirectories(input_directory)
+def get_subdirectories(input_directory, unclassified)
 {
     barcode_dirs = file(input_directory.resolve("barcode*"), type: 'dir', maxdepth: 1)
     all_dirs = file(input_directory.resolve("*"), type: 'dir', maxdepth: 1)
-    non_barcoded = ( all_dirs + barcode_dirs ) - all_dirs.intersect(barcode_dirs)
+    if (!unclassified) {
+        all_dirs.removeIf(it -> it.SimpleName.toLowerCase() == "unclassified")
+    }
+    non_barcoded = (all_dirs + barcode_dirs) - all_dirs.intersect(barcode_dirs)
+    
     return [barcode_dirs, non_barcoded]
 }
 
@@ -311,6 +317,7 @@ def create_metamap(Map arguments) {
  * @param sample_sheet Path to sample sheet CSV file.
  * @param min_barcode Minimum barcode to accept.
  * @param max_barcode Maximum (inclusive) barcode to accept.
+ * @param unclassified Keep unclassified reads.
  *
  * @return Channel of tuples (path, map(sample_id, type, barcode))
  */
@@ -320,7 +327,8 @@ def fastq_ingress(Map arguments)
         args:["input"],
         kwargs:[
             "sample":null, "sample_sheet":null,
-            "min_barcode":0, "max_barcode":Integer.MAX_VALUE],
+            "min_barcode":0, "max_barcode":Integer.MAX_VALUE,
+            "unclassified":false],
         name:"fastq_ingress")
     Map margs = parser.parse_args(arguments)
 
@@ -341,7 +349,7 @@ def fastq_ingress(Map arguments)
     // Handle directory input
     if (input.isDirectory()) {
         // Get barcoded and non barcoded subdirectories
-        (barcoded, non_barcoded) = get_subdirectories(input)
+        (barcoded, non_barcoded) = get_subdirectories(input, margs.unclassified)
 
         // Case 03: If no subdirectories, handle the single dir
         if (!barcoded && !non_barcoded) {
