@@ -126,7 +126,8 @@ workflow {
     samples = fastq_ingress([
         "input":params.fastq,
         "sample":params.sample,
-        "sample_sheet":params.sample_sheet])
+        "sample_sheet":params.sample_sheet,
+        "unclassified":params.analyse_unclassified])
 
     pipeline(samples)
     output(pipeline.out.results)

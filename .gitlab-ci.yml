@@ -28,6 +28,7 @@ docker-run:
     #   the variables, but it is broken when using long strings! See CW-756
     parallel:
         matrix:
+            # TODO: do we really need to run all from s3?
             - MATRIX_NAME: [
                 "single-file", "single-file-s3",
                 "case01", "case01-s3",
@@ -37,7 +38,8 @@ docker-run:
                 "case05", "case05-s3",
                 "case06", "case06-s3",
                 "case07", "case07-s3",
-                "case08", "case08-s3"]
+                "case08", "case08-s3",
+                "case20", "case20-include"]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
         #   we must redefine this CI_COMMIT_BRANCH rule to prevent docker-run
@@ -106,3 +108,10 @@ docker-run:
         - if: $MATRIX_NAME == "case08-s3"
           variables:
               NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case08 --sample_sheet s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case08/sample_sheet.csv"
+
+        - if: $MATRIX_NAME == "case20"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case20"
+        - if: $MATRIX_NAME == "case20-include"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case20 --unclassified true"

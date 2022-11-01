@@ -7,16 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - GitHub issues template.
-- Return of metadata with fastqingress
-- Check of number of samples and barcoded directories
-- Example of how to use the metadata from `fastqingress`
+- Return of metadata with fastqingress.
+- Check of number of samples and barcoded directories.
+- Example of how to use the metadata from `fastqingress`.
 ### Updated
-- Bumped base container to v0.2.0
-- Use groovy script to ping after workflow has run
-- Removed sanitize fastq option
+- Bumped base container to v0.2.0.
+- Use groovy script to ping after workflow has run.
+- Removed sanitize fastq option.
 ### Fixed
 - Output argument in Fastqingress homogenised.
 - Sanitize fastq intermittent null object error.
+### Changed
+- fastq_ingress now removes unclassified read folders by default.
 
 ## [v0.2.0]
 ### Added
