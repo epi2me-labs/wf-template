@@ -1,22 +1,5 @@
 import ArgumentParser
 
-process handleSingleFile {
-    label params.process_label
-    cpus 1
-    input:
-        file reads
-    output:
-        path "$reads.simpleName"
-    script:
-        def name = reads.simpleName
-        def reads_dir = 'reads_dir'
-    """
-    mkdir $name
-    mv $reads $name
-    """
-}
-
-
 process checkSampleSheet {
     label params.process_label
     cpus 1
@@ -61,8 +44,7 @@ def compareSampleSheetFastq(int sample_sheet_count, int valid_dir_count)
 def handle_single_file(input_file, sample_name)
 {
     singleFile = Channel.fromPath(input_file)
-    sample = handleSingleFile(singleFile)
-    return sample.map { it -> tuple(it, create_metamap([sample_id:sample_name ?: it.simpleName])) }
+    return singleFile.map { it -> tuple(it.parent, create_metamap([sample_id:sample_name ?: it.simpleName])) }
 
 }
 
