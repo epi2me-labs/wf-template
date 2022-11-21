@@ -72,6 +72,12 @@
                     "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
+                },
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
                 }
             }
         }
@@ -104,7 +110,7 @@
         },
         "wfversion": {
             "type": "string",
-            "default": "v0.2.0",
+            "default": "v4.0.0",
             "hidden": true
         },
         "monochrome_logs": {

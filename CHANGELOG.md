@@ -10,15 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Return of metadata with fastqingress.
 - Check of number of samples and barcoded directories.
 - Example of how to use the metadata from `fastqingress`.
-### Updated
+- Implemented `--version`
+### Changed
 - Bumped base container to v0.2.0.
 - Use groovy script to ping after workflow has run.
 - Removed sanitize fastq option.
+- fastq_ingress now removes unclassified read folders by default.
+- Workflow name and version is now more prominently displayed on start
 ### Fixed
 - Output argument in Fastqingress homogenised.
 - Sanitize fastq intermittent null object error.
-### Changed
-- fastq_ingress now removes unclassified read folders by default.
+### Note
+- Bumped version to `v4` to align versioning with Launcher v4
 
 ## [v0.2.0]
 ### Added
