@@ -10,8 +10,6 @@ variables:
 
 
 # Remove this block in downstream templates
-conda-run:
-    tags: [] # no need for big ram
 singularity-run:
     tags: [] # no need for big ram
 # end
