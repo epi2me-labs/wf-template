@@ -59,12 +59,6 @@
                     "default": "output",
                     "format": "directory-path",
                     "description": "Directory for output of all workflow results."
-                },
-                "report_name": {
-                    "type": "string",
-                    "default": "report",
-                    "description": "Output report filename suffix.  Will output eg. wf-template-<report_name>.html",
-                    "help_text": "Useful to keep track of reports when running the workflow multiple times."
                 }
             }
         },

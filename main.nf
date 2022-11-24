@@ -68,7 +68,7 @@ process makeReport {
     output:
         path "wf-template-*.html"
     script:
-        report_name = "wf-template-" + params.report_name + '.html'
+        report_name = "wf-template-report.html"
         def metadata = new JsonBuilder(metadata).toPrettyString()
     """
     echo '${metadata}' > metadata.json
@@ -122,7 +122,7 @@ workflow {
     if (params.disable_ping == false) {
         Pinguscript.ping_post(workflow, "start", "none", params.out_dir, params)
     }
-    
+
     samples = fastq_ingress([
         "input":params.fastq,
         "sample":params.sample,
@@ -131,13 +131,13 @@ workflow {
 
     pipeline(samples)
     output(pipeline.out.results)
-} 
+}
 
 if (params.disable_ping == false) {
     workflow.onComplete {
         Pinguscript.ping_post(workflow, "end", "none", params.out_dir, params)
     }
-    
+
     workflow.onError {
         Pinguscript.ping_post(workflow, "error", "$workflow.errorMessage", params.out_dir, params)
     }
