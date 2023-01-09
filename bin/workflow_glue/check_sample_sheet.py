@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Script to check that sample sheet is well-formatted."""
 import sys
 
