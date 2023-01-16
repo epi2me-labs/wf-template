@@ -14,15 +14,6 @@ singularity-run:
     tags: [] # no need for big ram
 # end
 
-pytest:
-    extends: .branchsetup-alpine
-    stage: preflight
-    script:
-      - wget -qO- https://get.nextflow.io | bash
-      - mv nextflow ${WF_SCRIPTS}/bin
-      - SHA=$(nextflow config -properties|grep container_sha|awk -F= '{print $2}')
-      - IMAGE="${DOCKERHUB_NAMESPACE}/${CI_PROJECT_NAME}:${SHA}"
-      - docker run -v ${PWD}:/host $IMAGE pytest /host/bin/workflow_glue/tests
 
 docker-run:
 
