@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Output argument in Fastqingress homogenised.
 - Sanitize fastq intermittent null object error.
+- Add `*.pyc` and `*.pyo` ignores to wf-template .gitignore
 ### Note
 - Bumped version to `v4` to align versioning with Launcher v4
 
