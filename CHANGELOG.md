@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example of how to use the metadata from `fastqingress`.
 - Implemented `--version`
 ### Changed
+- `fastq_ingress` now returns `[metamap, path-to-fastcat-seqs, path-to-fastcat-stats | null]`
+- Setting `params.wf.fastcat_stats` to true will force generation of fastcat stats even when the input is only a single file
 - Bumped base container to v0.2.0.
 - Use groovy script to ping after workflow has run.
 - Removed sanitize fastq option.

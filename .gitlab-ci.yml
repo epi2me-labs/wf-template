@@ -7,6 +7,8 @@ variables:
     # We'll use the single-file case for these runs
     NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz"
     CI_FLAVOUR: "new" # set to "classic" for old-style CI
+    TEST_CMD: "bash test/run_fastq_ingress_test.sh"
+    S3_TEST_DATA: "s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/cw-1019/test_data"
 
 
 # Remove this block in downstream templates
@@ -37,8 +39,11 @@ docker-run:
                 "case05", "case05-s3",
                 "case06", "case06-s3",
                 "case07", "case07-s3",
-                "case08", "case08-s3",
-                "case20", "case20-include"]
+                "case08", "case08-s3", case08-unclassified, case08-unclassified-s3,
+                "case09", "case09-s3",
+                "case10", "case10-s3",
+                "case11", "case11-s3",
+                ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
         #   we must redefine this CI_COMMIT_BRANCH rule to prevent docker-run
@@ -48,69 +53,121 @@ docker-run:
         - if: $MATRIX_NAME == "single-file"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/reads.fastq.gz $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "single-file-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/reads.fastq.gz"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/reads.fastq.gz"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/reads.fastq.gz $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "case01"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case01"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case01 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case01-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case01"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case01"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case01 $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "case02"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case02"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case02 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case02-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case02"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case02"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case02 $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "case03"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case03"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain FASTQ files and sub-directories."
         - if: $MATRIX_NAME == "case03-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case03"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case03"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain FASTQ files and sub-directories."
 
         - if: $MATRIX_NAME == "case04"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case04"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case04 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case04-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case04"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case04"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case04 $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "case05"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case05"
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case05 --sample_sheet test_data/fastq_ingress/case05/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case05 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case05-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case05"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case05 --sample_sheet $S3_TEST_DATA/fastq_ingress/case05/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case05 $$PWD/$$CI_PROJECT_NAME $S3_TEST_DATA/fastq_ingress/case05/sample_sheet.csv
 
         - if: $MATRIX_NAME == "case06"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case06 --sample_sheet test_data/fastq_ingress/case06/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case06 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case06-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case06 --sample_sheet s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case06/sample_sheet.csv"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case06 --sample_sheet $S3_TEST_DATA/fastq_ingress/case06/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case06 $$PWD/$$CI_PROJECT_NAME $S3_TEST_DATA/fastq_ingress/case06/sample_sheet.csv
 
         - if: $MATRIX_NAME == "case07"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case07 --sample_sheet test_data/fastq_ingress/case07/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case07 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case07-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case07 --sample_sheet s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case07/sample_sheet.csv"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case07 --sample_sheet $S3_TEST_DATA/fastq_ingress/case07/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case07 $$PWD/$$CI_PROJECT_NAME $S3_TEST_DATA/fastq_ingress/case07/sample_sheet.csv
 
         - if: $MATRIX_NAME == "case08"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case08 --sample_sheet test_data/fastq_ingress/case08/sample_sheet.csv"
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case08"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case08 $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "case08-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case08 --sample_sheet s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case08/sample_sheet.csv"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case08"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case08 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case08-unclassified"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case08 --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case08 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case08-unclassified-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case08 --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case08 $$PWD/$$CI_PROJECT_NAME
 
-        - if: $MATRIX_NAME == "case20"
+        - if: $MATRIX_NAME == "case09"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case20"
-        - if: $MATRIX_NAME == "case20-include"
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case09"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case09 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case09-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case20 --unclassified true"
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case09"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case09 $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "case10"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case10"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain more than one level of sub-directories with FASTQ files."
+        - if: $MATRIX_NAME == "case10-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case10"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain more than one level of sub-directories with FASTQ files."
+
+        - if: $MATRIX_NAME == "case11"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case11 --sample_sheet test_data/fastq_ingress/case11/sample_sheet.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Invalid sample sheet: values in 'alias' column not unique"
+        - if: $MATRIX_NAME == "case11-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case11 --sample_sheet $S3_TEST_DATA/fastq_ingress/case11/sample_sheet.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Invalid sample sheet: values in 'alias' column not unique"
