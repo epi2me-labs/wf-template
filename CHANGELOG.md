@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check of number of samples and barcoded directories.
 - Example of how to use the metadata from `fastqingress`.
 - Implemented `--version`
+- `fastcat_extra_args` option to `fastq_ingress` to pass arbitrary arguments to `fastcat` (defaults to empty string).
+- `fastcat_stats` option to `fastq_ingress` to force generation of `fastcat` stats even when the input is only a single file (default is false).
 ### Changed
-- `fastq_ingress` now returns `[metamap, path-to-fastcat-seqs, path-to-fastcat-stats | null]`
-- Setting `params.wf.fastcat_stats` to true will force generation of fastcat stats even when the input is only a single file
+- `fastq_ingress` now returns `[metamap, path-to-fastcat-seqs, path-to-fastcat-stats | null]`.
 - Bumped base container to v0.2.0.
 - Use groovy script to ping after workflow has run.
 - Removed sanitize fastq option.

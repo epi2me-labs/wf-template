@@ -42,7 +42,7 @@ def fastq_ingress(Map arguments)
     }
     if (margs.fastcat_stats) {
         // run fastcat regardless of input type
-        return fastcat(ch_input)
+        return fastcat(ch_input, margs["fastcat_extra_args"])
     } else {
         // the fastcat stats were not requested --> run fastcat only on directories with
         // more than one FASTQ file (and not on single files or directories with a
@@ -64,7 +64,9 @@ def fastq_ingress(Map arguments)
             dir_with_fastq_files: true
         }
         // call the respective processes on both branches and return
-        return (ch_branched.dir_with_fastq_files | fastcat).concat(
+        return fastcat(
+            ch_branched.dir_with_fastq_files, margs["fastcat_extra_args"]
+        ).concat(
             ch_branched.single_file | mv_or_pigz | map {
                 meta, path -> [meta, path, null]
             }
@@ -192,6 +194,7 @@ process fastcat {
     cpus params.threads
     input:
         tuple val(meta), path(input)
+        val extra_args
     output:
         tuple val(meta), path("seqs.fastq.gz"), path("fastcat_stats")
     script:
@@ -203,6 +206,7 @@ process fastcat {
             -s $meta.alias \
             -r $fastcat_stats_outdir/per-read-stats.tsv \
             -f $fastcat_stats_outdir/per-file-stats.tsv \
+            $extra_args \
             $input \
             | pigz -p $task.cpus > $out
         """
@@ -222,6 +226,7 @@ Map parse_arguments(Map arguments) {
                 "sample_sheet": null,
                 "analyse_unclassified": false,
                 "fastcat_stats": false,
+                "fastcat_extra_args": "",
                 "watch_path": false],
         name: "fastq_ingress")
     return parser.parse_args(arguments)
