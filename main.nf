@@ -149,7 +149,7 @@ workflow {
         "sample":params.sample,
         "sample_sheet":params.sample_sheet,
         "analyse_unclassified":params.analyse_unclassified,
-        "fastcat_stats": true,
+        "fastcat_stats": params.wf.fastcat_stats,
         "fastcat_extra_args": ""])
 
     pipeline(samples)
