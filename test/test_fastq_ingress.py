@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import pathlib
+import sys
 
 import pandas as pd
 import pysam
@@ -36,7 +37,6 @@ def get_fastq_entries(fastq_file):
     return entries
 
 
-@pytest.fixture(scope="module")
 def args():
     """Parse and process input arguments. Use the workflow params for those missing."""
     # get the path to the workflow output directory
@@ -90,10 +90,8 @@ def args():
     return input_path, sample_sheet, fastq_ingress_results_dir, params
 
 
-@pytest.fixture(scope="module")
-def valid_inputs(args):
+def get_valid_inputs(input_path, sample_sheet, params):
     """Get valid input paths and corresponding metadata."""
-    input_path, sample_sheet, _, params = args
     # find the valid inputs
     valid_inputs = []
     if os.path.isfile(input_path):
@@ -180,28 +178,37 @@ def valid_inputs(args):
     return valid_inputs
 
 
+# prepare data for the tests
+@pytest.fixture(scope="module")
+def prepare():
+    """Prepare data for tests."""
+    input_path, sample_sheet, fastq_ingress_results_dir, params = args()
+    valid_inputs = get_valid_inputs(input_path, sample_sheet, params)
+    return fastq_ingress_results_dir, valid_inputs, params
+
+
 # define tests
-def test_result_subdirs(args, valid_inputs):
+def test_result_subdirs(prepare):
     """
     Test if workflow results dir contains all expected samples.
 
     Tests if the published sub-directories in `fastq_ingress_results_dir` contain all
     the samples we expect.
     """
-    _, _, fastq_ingress_results_dir, _ = args
+    fastq_ingress_results_dir, valid_inputs, _ = prepare
     _, subdirs, files = next(os.walk(fastq_ingress_results_dir))
     assert not files, "Files found in top-level dir of fastq_ingress results"
     assert set(subdirs) == set([meta["alias"] for meta, _ in valid_inputs])
 
 
-def test_fastq_entry_names(args, valid_inputs):
+def test_fastq_entry_names(prepare):
     """
     Test FASTQ entries.
 
     Tests if the concatenated sequences indeed contain all the FASTQ entries of the
     FASTQ files in the valid inputs.
     """
-    _, _, fastq_ingress_results_dir, _ = args
+    fastq_ingress_results_dir, valid_inputs, _ = prepare
     for meta, path in valid_inputs:
         # get FASTQ entries in the result file produced by the workflow
         fastq_entries = get_fastq_entries(
@@ -217,9 +224,9 @@ def test_fastq_entry_names(args, valid_inputs):
         assert set(fastq_entries) == set(exp_fastq_entries)
 
 
-def test_stats_present(args, valid_inputs):
+def test_stats_present(prepare):
     """Tests if the `fastcat` stats are present when they should be."""
-    _, _, fastq_ingress_results_dir, params = args
+    fastq_ingress_results_dir, valid_inputs, params = prepare
     for meta, path in valid_inputs:
         # we expect `fastcat` stats in two cases: (i) they were requested explicitly or
         # (ii) the input was a directory containing multiple FASTQ files
@@ -241,4 +248,5 @@ def test_stats_present(args, valid_inputs):
 
 if __name__ == "__main__":
     # trigger pytest
-    pytest.main([os.path.realpath(__file__)])
+    ret_code = pytest.main([os.path.realpath(__file__)])
+    sys.exit(ret_code)
