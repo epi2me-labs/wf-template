@@ -321,7 +321,7 @@ def get_valid_inputs(Map margs){
                 ]}
             } else {
                 ch_input = Channel.fromPath(sub_dirs_with_fastq_files).map {
-                    [create_metamap([alias: it.baseName]), it]
+                    [create_metamap([alias: it.baseName, barcode: it.baseName]), it]
                 }
             }
         }
