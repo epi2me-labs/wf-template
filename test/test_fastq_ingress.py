@@ -154,8 +154,9 @@ def get_valid_inputs(input_path, sample_sheet, params):
                     continue
                 # only process further if sub-dir has fastq files
                 if any(map(is_fastq_file, files)):
+                    barcode = os.path.basename(dirname)
                     valid_inputs.append(
-                        [create_metadict(alias=os.path.basename(dirname)), dirname]
+                        [create_metadict(alias=barcode, barcode=barcode), dirname]
                     )
     # parse the sample sheet in case there was one
     if sample_sheet is not None:
@@ -164,16 +165,15 @@ def get_valid_inputs(input_path, sample_sheet, params):
             "barcode",
             drop=False,
         )
-        # now filter the valid inputs based on the sample sheet (and use it to annotate
-        # the metadata)
-        filtered_valid_inputs = []
-        for _, path in valid_inputs:
-            barcode = os.path.basename(path)
-            if barcode in sample_sheet.index:
-                filtered_valid_inputs.append(
-                    [create_metadict(**dict(sample_sheet.loc[barcode])), path]
-                )
-        valid_inputs = filtered_valid_inputs
+        # now, get the corresponding inputs for each entry in the sample sheet (sample
+        # sheet entries for which no input directory was found will have `None` as their
+        # input path); we need a dict mapping barcodes to valid input paths for this
+        valid_inputs_dict = {os.path.basename(path): path for _, path in valid_inputs}
+        # reset `valid_inputs`
+        valid_inputs = []
+        for barcode, meta in sample_sheet.iterrows():
+            path = valid_inputs_dict.get(barcode)   # returns `None` if key not found
+            valid_inputs.append([create_metadict(**dict(meta)), path])
 
     return valid_inputs
 
@@ -196,6 +196,10 @@ def test_result_subdirs(prepare):
     the samples we expect.
     """
     fastq_ingress_results_dir, valid_inputs, _ = prepare
+    # `valid_inputs` might have values that had a sample sheet entry but no input dir or
+    # reads (and their path is thus `None`) --> filter them out before doing the
+    # assertions
+    valid_inputs = filter(lambda x: x[1] is not None, valid_inputs)
     _, subdirs, files = next(os.walk(fastq_ingress_results_dir))
     assert not files, "Files found in top-level dir of fastq_ingress results"
     assert set(subdirs) == set([meta["alias"] for meta, _ in valid_inputs])
@@ -210,6 +214,9 @@ def test_fastq_entry_names(prepare):
     """
     fastq_ingress_results_dir, valid_inputs, _ = prepare
     for meta, path in valid_inputs:
+        if path is None:
+            # this sample sheet entry had no input dir (or no reads)
+            continue
         # get FASTQ entries in the result file produced by the workflow
         fastq_entries = get_fastq_entries(
             fastq_ingress_results_dir / meta["alias"] / "seqs.fastq.gz"
@@ -228,6 +235,9 @@ def test_stats_present(prepare):
     """Tests if the `fastcat` stats are present when they should be."""
     fastq_ingress_results_dir, valid_inputs, params = prepare
     for meta, path in valid_inputs:
+        if path is None:
+            # this sample sheet entry had no input dir (or no reads)
+            continue
         # we expect `fastcat` stats in two cases: (i) they were requested explicitly or
         # (ii) the input was a directory containing multiple FASTQ files
         expect_stats = (

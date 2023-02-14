@@ -3,11 +3,11 @@
 // Developer notes
 //
 // This template workflow provides a basic structure to copy in order
-// to create a new workflow. Current recommended pratices are:
+// to create a new workflow. Current recommended practices are:
 //     i) create a simple command-line interface.
 //    ii) include an abstract workflow scope named "pipeline" to be used
 //        in a module fashion
-//   iii) a second concreate, but anonymous, workflow scope to be used
+//   iii) a second concrete, but anonymous, workflow scope to be used
 //        as an entry point when using this workflow in isolation.
 
 import groovy.json.JsonBuilder
@@ -124,7 +124,12 @@ workflow pipeline {
             metadata, per_read_stats, software_versions.collect(), workflow_params
         )
         reads
-        | map { [it[0], it[1], it[2] ?: OPTIONAL_FILE ] }
+        | map {
+            // drop samples that didn't have any reads (i.e. path to fastcat seqs is
+            // `null`)
+            if (it[1]) {
+                [ it[0], it[1], it[2] ?: OPTIONAL_FILE ] }
+        }
         | collect_fastq_ingress_results_in_dir
     emit:
         fastq_ingress_results = collect_fastq_ingress_results_in_dir.out
@@ -142,7 +147,6 @@ workflow {
     if (params.disable_ping == false) {
         Pinguscript.ping_post(workflow, "start", "none", params.out_dir, params)
     }
-
 
     samples = fastq_ingress([
         "input":params.fastq,
