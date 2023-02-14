@@ -40,14 +40,22 @@ def fastq_ingress(Map arguments)
         // with fastq)
         ch_input = get_valid_inputs(margs)
     }
+    // `ch_input` might contain elements of `[metamap, null]` if there were entries in
+    // the sample sheet for which no FASTQ files were found. We put these into an extra
+    // channel and combine with the result channel before returning.
+    ch_input = ch_input.branch { meta, path ->
+        reads_found: path as boolean
+        no_reads_found: true
+    }
+    def ch_result
     if (margs.fastcat_stats) {
         // run fastcat regardless of input type
-        return fastcat(ch_input, margs["fastcat_extra_args"])
+        ch_result = fastcat(ch_input.reads_found, margs["fastcat_extra_args"])
     } else {
         // the fastcat stats were not requested --> run fastcat only on directories with
         // more than one FASTQ file (and not on single files or directories with a
         // single file)
-        ch_branched = ch_input.map {meta, path ->
+        def ch_branched = ch_input.reads_found.map {meta, path ->
             // find directories with only a single FASTQ file and "unwrap" the file
             if (path.isDirectory()) {
                 List fq_files = get_fq_files_in_dir(path)
@@ -64,7 +72,7 @@ def fastq_ingress(Map arguments)
             dir_with_fastq_files: true
         }
         // call the respective processes on both branches and return
-        return fastcat(
+        ch_result = fastcat(
             ch_branched.dir_with_fastq_files, margs["fastcat_extra_args"]
         ).concat(
             ch_branched.single_file | mv_or_pigz | map {
@@ -72,6 +80,7 @@ def fastq_ingress(Map arguments)
             }
         )
     }
+    return ch_result.concat(ch_input.no_reads_found.map { [*it, null] })
 }
 
 
@@ -305,20 +314,25 @@ def get_valid_inputs(Map margs){
             if (margs.sample_sheet) {
                 // get channel of entries in the sample sheet
                 def ch_sample_sheet = get_sample_sheet(file(margs.sample_sheet))
-                // get the intersection of both channels
-                def ch_intersection = Channel.fromPath(sub_dirs_with_fastq_files).map {
+                // get the union of both channels (missing values will be replaced with
+                // `null`)
+                def ch_union = Channel.fromPath(sub_dirs_with_fastq_files).map {
                     [it.baseName, it]
-                }.join(ch_sample_sheet.map{[it.barcode, it]}, remainder: false)
-                // TODO: we should let the user know if a sample present in the sample
-                // sheet didn't have a matching sub-directory. We could throw an error
-                // or print a warning, but ideally we would return an extra channel from
-                // `fastq_ingress` with a summary about what has been found (in terms of
-                // sample sheet and sub-dirs) --> we'll do this later
-
-                // put metadata into map and return
-                ch_input = ch_intersection.map {barcode, path, sample_sheet_entry -> [
-                    create_metamap(sample_sheet_entry), path
-                ]}
+                }.join(ch_sample_sheet.map{[it.barcode, it]}, remainder: true)
+                // after joining the channels, there are three possible cases:
+                // (i) valid input path and sample sheet entry are both present
+                // (ii) there is a sample sheet entry but no corresponding input dir
+                //      --> we'll emit `[metamap-from-sample-sheet-entry, null]`
+                // (iii) there is a valid path, but the sample sheet entry is missing
+                //      --> drop this entry and print a warning to the log
+                ch_input = ch_union.map {barcode, path, sample_sheet_entry ->
+                    if (sample_sheet_entry) {
+                        [create_metamap(sample_sheet_entry), path]
+                    } else {
+                        log.warn "Input directory '$barcode' was found, but sample " +
+                            "sheet '$margs.sample_sheet' has no such entry."
+                    }
+                }
             } else {
                 ch_input = Channel.fromPath(sub_dirs_with_fastq_files).map {
                     [create_metamap([alias: it.baseName, barcode: it.baseName]), it]

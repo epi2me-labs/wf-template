@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `fastcat_extra_args` option to `fastq_ingress` to pass arbitrary arguments to `fastcat` (defaults to empty string).
 - `fastcat_stats` option to `fastq_ingress` to force generation of `fastcat` stats even when the input is only a single file (default is false).
 ### Changed
-- `fastq_ingress` now returns `[metamap, path-to-fastcat-seqs, path-to-fastcat-stats | null]`.
+- `fastq_ingress` now returns `[metamap, path-to-fastcat-seqs | null, path-to-fastcat-stats | null]`.
 - Bumped base container to v0.2.0.
 - Use groovy script to ping after workflow has run.
 - Removed sanitize fastq option.

@@ -33,7 +33,7 @@ docker-run:
             - MATRIX_NAME: [
                 "single-file", "single-file-s3",
                 "case01", "case01-s3",
-                "case02", "case02-s3",
+                "case02", "case02-s3", "case02-fastcat_stats", "case02-fastcat_stats-s3",
                 "case03", "case03-s3",
                 "case04", "case04-s3",
                 "case05", "case05-s3",
@@ -75,6 +75,14 @@ docker-run:
         - if: $MATRIX_NAME == "case02-s3"
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case02"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case02 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case02-fastcat_stats"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case02 --wf.fastcat_stats"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case02 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case02-fastcat_stats-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case02 --wf.fastcat_stats"
               AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case02 $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "case03"
