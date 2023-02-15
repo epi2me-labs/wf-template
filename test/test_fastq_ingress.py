@@ -196,10 +196,6 @@ def test_result_subdirs(prepare):
     the samples we expect.
     """
     fastq_ingress_results_dir, valid_inputs, _ = prepare
-    # `valid_inputs` might have values that had a sample sheet entry but no input dir or
-    # reads (and their path is thus `None`) --> filter them out before doing the
-    # assertions
-    valid_inputs = filter(lambda x: x[1] is not None, valid_inputs)
     _, subdirs, files = next(os.walk(fastq_ingress_results_dir))
     assert not files, "Files found in top-level dir of fastq_ingress results"
     assert set(subdirs) == set([meta["alias"] for meta, _ in valid_inputs])
@@ -254,6 +250,15 @@ def test_stats_present(prepare):
                 assert (
                     fastq_ingress_results_dir / meta["alias"] / "fastcat_stats" / fname
                 ).is_file()
+
+
+def test_metamap(prepare):
+    """Test if the metamap in the `fastq_ingress` results is as expected."""
+    fastq_ingress_results_dir, valid_inputs, _ = prepare
+    for meta, _ in valid_inputs:
+        with open(fastq_ingress_results_dir / meta["alias"] / "metamap.json", "r") as f:
+            metamap = json.load(f)
+        assert meta == metamap
 
 
 if __name__ == "__main__":

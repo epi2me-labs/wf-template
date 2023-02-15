@@ -91,19 +91,28 @@ process output {
 
 // Creates a new directory named after the sample alias and moves the fastcat results
 // into it.
-process collect_fastq_ingress_results_in_dir {
+process collectFastqIngressResultsInDir {
     label "wftemplate"
     input:
-        tuple val(meta), path(concat_seqs), path(fastcat_stats)
+        // both the fastcat seqs as well as stats might be `OPTIONAL_FILE` --> stage in
+        // different sub-directories to avoid name collisions
+        tuple val(meta), path(concat_seqs, stageAs: "seqs/*"), path(fastcat_stats,
+            stageAs: "stats/*")
     output:
-        path "*"
+        // use sub-dir to avoid name clashes (in the unlikely event of a sample alias
+        // being `seq` or `stats`)
+        path "out/*"
     script:
-    String outdir = meta["alias"]
+    String outdir = "out/${meta["alias"]}"
+    String metaJson = new JsonBuilder(meta).toPrettyString()
+    String concat_seqs = \
+        (concat_seqs.fileName.name == OPTIONAL_FILE.name) ? "" : concat_seqs
     String fastcat_stats = \
-        (fastcat_stats.name == OPTIONAL_FILE.name) ? "" : fastcat_stats
+        (fastcat_stats.fileName.name == OPTIONAL_FILE.name) ? "" : fastcat_stats
     """
-    mkdir $outdir
-    mv $concat_seqs $fastcat_stats $outdir
+    mkdir -p $outdir
+    echo '$metaJson' > metamap.json
+    mv metamap.json $concat_seqs $fastcat_stats $outdir
     """
 }
 
@@ -124,15 +133,11 @@ workflow pipeline {
             metadata, per_read_stats, software_versions.collect(), workflow_params
         )
         reads
-        | map {
-            // drop samples that didn't have any reads (i.e. path to fastcat seqs is
-            // `null`)
-            if (it[1]) {
-                [ it[0], it[1], it[2] ?: OPTIONAL_FILE ] }
-        }
-        | collect_fastq_ingress_results_in_dir
+        // replace `null` with path to optional file
+        | map { [ it[0], it[1] ?: OPTIONAL_FILE, it[2] ?: OPTIONAL_FILE ] }
+        | collectFastqIngressResultsInDir
     emit:
-        fastq_ingress_results = collect_fastq_ingress_results_in_dir.out
+        fastq_ingress_results = collectFastqIngressResultsInDir.out
         report
         workflow_params
         // TODO: use something more useful as telemetry
