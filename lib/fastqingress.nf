@@ -106,8 +106,14 @@ def watch_path(Map margs) {
     if (input.isFile()) {
         error "Input ($input) must be a directory when using `watch_path`."
     }
-    // create channel with `watchPath`
-    ch_watched = Channel.watchPath("$input/**").until { it.name.startsWith('STOP') }
+    // get existing FASTQ files first (look for relevant files in the top-level dir and
+    // all sub-dirs)
+    def ch_existing_input = Channel.fromPath(input)
+    | concat(Channel.fromPath("$input/*", type: 'dir'))
+    | map { get_fq_files_in_dir(it) }
+    | flatten
+    // now get channel with files found by `watchPath`
+    def ch_watched = Channel.watchPath("$input/**").until { it.name.startsWith('STOP') }
     // only keep FASTQ files
     | filter {
         for (ext in EXTENSIONS) {
@@ -115,25 +121,30 @@ def watch_path(Map margs) {
         }
         return false
     }
-    // throw error when finding files in top-level dir and sub-directories
-    | combine(Channel.of([:]))
+    // merge the channels
+    ch_watched = ch_existing_input | concat(ch_watched)
+    // check if input is as expected; start by throwing an error when finding files in
+    // top-level dir and sub-directories
+    String prev_input_type
+    ch_watched
     | map {
-        String old_state = it[1]["state"]
-        String new_state = (it[0].parent == input) ? "top-level" : "subdir"
-        if (old_state && (old_state != new_state)) {
-            error "`watchPath` found files in the top-level directory " +
+        String input_type = (it.parent == input) ? "top-level" : "sub-dir"
+        if (prev_input_type && (input_type != prev_input_type)) {
+            error "`watchPath` found FASTQ files in the top-level directory " +
                 "as well as in sub-directories."
         }
-        // we also don't want files in the top-level dir when we got a sample sheet
-        if ((new_state == "top-level") && margs["sample_sheet"]) {
-            error "`watchPath` found files in top-level directory even though there " +
-                "is a sample sheet."
+        // if file is in a sub-dir, make sure it's not a sub-sub-dir
+        if ((input_type == "sub-dir") && (it.parent.parent != input)) {
+            error "`watchPath` found a FASTQ file more than one level of " +
+                "sub-directories deep ('$it')."
         }
-        it[1]["state"] = new_state
-        [it[0], it[1]]
+        // we also don't want files in the top-level dir when we got a sample sheet
+        if ((input_type == "top-level") && margs["sample_sheet"]) {
+            error "`watchPath` found files in top-level directory even though a " +
+                "sample sheet was provided ('${margs["sample_sheet"]}')."
+        }
+        prev_input_type = input_type
     }
-    | map { it[0] }
-
     if (margs.sample_sheet) {
         // add metadata from sample sheet (we can't use join here since it does not work
         // with repeated keys; we therefore need to transform the sample sheet data into
@@ -144,7 +155,7 @@ def watch_path(Map margs) {
         // now we can use this channel to annotate all files with the corresponding info
         // from the sample sheet
         ch_watched = ch_watched
-        | combine ( ch_sample_sheet )
+        | combine(ch_sample_sheet)
         | map { file_path, sample_sheet_map ->
             String barcode = file_path.parent.name
             Map meta = sample_sheet_map[barcode]
@@ -212,7 +223,7 @@ process fastcat {
         """
         mkdir $fastcat_stats_outdir
         fastcat \
-            -s $meta.alias \
+            -s ${meta["alias"]} \
             -r $fastcat_stats_outdir/per-read-stats.tsv \
             -f $fastcat_stats_outdir/per-file-stats.tsv \
             $extra_args \
