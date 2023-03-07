@@ -107,16 +107,25 @@ def get_valid_inputs(input_path, sample_sheet, params):
             ]
         )
     else:
-        # is a directory --> check if top-level dir or dir with subdirs
+        # is a directory --> check if fastq files in top-level dir or in sub-dirs
         tree = list(os.walk(input_path))
-        if len(tree) == 1:
-            # top-level dir --> make sure we got fastq files
-            ((dirname, subdirs, files),) = tree
-            if not any(map(is_fastq_file, files)):
-                raise ValueError(
-                    f"Input directory '{input_path}' contains neither sub-directories "
-                    "nor FASTQ files"
-                )
+        top_dir_has_fastq_files = any(map(is_fastq_file, tree[0][2]))
+        subdirs_have_fastq_files = any(
+            any(map(is_fastq_file, files)) for _, _, files in tree[1:]
+        )
+        if top_dir_has_fastq_files and subdirs_have_fastq_files:
+            raise ValueError(
+                f"Input directory '{input_path}' cannot contain FASTQ "
+                "files and sub-directories with FASTQ files."
+            )
+        # make sure we only have fastq files in either (top-level dir or sub-dirs) and
+        # not both
+        if not top_dir_has_fastq_files and not subdirs_have_fastq_files:
+            raise ValueError(
+                f"Input directory '{input_path}' contains neither sub-directories "
+                "nor FASTQ files."
+            )
+        if top_dir_has_fastq_files:
             valid_inputs.append(
                 [
                     create_metadict(
@@ -128,19 +137,13 @@ def get_valid_inputs(input_path, sample_sheet, params):
                 ]
             )
         else:
-            # dir with sub-dirs --> check if we have fastq files as well as sub-dirs
-            if any(map(is_fastq_file, tree[0][2])):
-                raise ValueError(
-                    f"Input directory '{input_path}' cannot contain FASTQ "
-                    "files and sub-directories."
-                )
             # iterate over the sub-directories
-            for dirname, subdirs, files in tree[1:]:
-                # make sure we don't have sub-sub-directories
-                if subdirs and any(
+            for subdir, subsubdirs, files in tree[1:]:
+                # make sure we don't have sub-sub-directories containing fastq files
+                if subsubdirs and any(
                     is_fastq_file(file)
-                    for subdir in subdirs
-                    for file in os.listdir(pathlib.Path(dirname) / subdir)
+                    for subsubdir in subsubdirs
+                    for file in os.listdir(pathlib.Path(subdir) / subsubdir)
                 ):
                     raise ValueError(
                         f"Input directory '{input_path}' cannot contain more "
@@ -148,15 +151,15 @@ def get_valid_inputs(input_path, sample_sheet, params):
                     )
                 # handle unclassified
                 if (
-                    os.path.basename(dirname) == "unclassified"
+                    os.path.basename(subdir) == "unclassified"
                     and not params["analyse_unclassified"]
                 ):
                     continue
                 # only process further if sub-dir has fastq files
                 if any(map(is_fastq_file, files)):
-                    barcode = os.path.basename(dirname)
+                    barcode = os.path.basename(subdir)
                     valid_inputs.append(
-                        [create_metadict(alias=barcode, barcode=barcode), dirname]
+                        [create_metadict(alias=barcode, barcode=barcode), subdir]
                     )
     # parse the sample sheet in case there was one
     if sample_sheet is not None:
@@ -172,9 +175,8 @@ def get_valid_inputs(input_path, sample_sheet, params):
         # reset `valid_inputs`
         valid_inputs = []
         for barcode, meta in sample_sheet.iterrows():
-            path = valid_inputs_dict.get(barcode)   # returns `None` if key not found
+            path = valid_inputs_dict.get(barcode)  # returns `None` if key not found
             valid_inputs.append([create_metadict(**dict(meta)), path])
-
     return valid_inputs
 
 

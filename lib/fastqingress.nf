@@ -268,10 +268,9 @@ def get_valid_inputs(Map margs){
     } catch (NoSuchFileException e) {
         error "Input path $margs.input does not exist."
     }
-    boolean dir_has_subdirs = false
-    boolean dir_has_fastq_files = false
-    // declare resulting input channel
+    // declare resulting input channel and other variables needed in the outer scope
     def ch_input
+    ArrayList sub_dirs_with_fastq_files
     // handle case of `input` being a single file
     if (input.isFile()) {
         // the `fastcat` process can deal with directories or single file inputs
@@ -281,24 +280,26 @@ def get_valid_inputs(Map margs){
         // input is a directory --> we accept two cases: (i) a top-level directory with
         // fastq files and no sub-directories or (ii) a directory with one layer of
         // sub-directories containing fastq files
-        dir_has_fastq_files = get_fq_files_in_dir(input) as boolean
-        // find potential subdirectories (this list can be empty)
+        boolean dir_has_fastq_files = get_fq_files_in_dir(input)
+        // find potential sub-directories (and sub-dirs with FASTQ files; note that
+        // these lists can be empty)
         ArrayList sub_dirs = file(input.resolve('*'), type: "dir")
-        dir_has_subdirs = sub_dirs as boolean
-        // deal with first case (top-lvl dir with fastq files and no sub-directories)
-        if (dir_has_fastq_files){
-            if (dir_has_subdirs) {
+        sub_dirs_with_fastq_files = sub_dirs.findAll { get_fq_files_in_dir(it) }
+        // deal with first case (top-lvl dir with FASTQ files and no sub-directories
+        // containing FASTQ files)
+        if (dir_has_fastq_files) {
+            if (sub_dirs_with_fastq_files) {
                 error "Input directory '$input' cannot contain FASTQ " +
-                "files and sub-directories."
+                    "files and sub-directories with FASTQ files."
             }
             ch_input = Channel.of(
                 [create_metamap([alias: margs["sample"] ?: input.baseName]), input])
         } else {
             // deal with the second case (sub-directories with fastq data) --> first
             // check whether we actually found sub-directories
-            if (!dir_has_subdirs) {
+            if (!sub_dirs_with_fastq_files) {
                 error "Input directory '$input' must contain either FASTQ files " +
-                    "or sub-directories."
+                    "or sub-directories containing FASTQ files."
             }
             // make sure that there are no sub-sub-directories with FASTQ files and that
             // the sub-directories actually contain fastq files)
@@ -308,12 +309,6 @@ def get_valid_inputs(Map margs){
             }) {
                 error "Input directory '$input' cannot contain more " +
                     "than one level of sub-directories with FASTQ files."
-            }
-            ArrayList sub_dirs_with_fastq_files = sub_dirs.findAll {
-                get_fq_files_in_dir(it) as boolean
-            }
-            if (!sub_dirs_with_fastq_files) {
-                error "No FASTQ files were found in the sub-directories of '$input'."
             }
             // remove directories called 'unclassified' unless otherwise specified
             if (!margs.analyse_unclassified) {
@@ -355,7 +350,7 @@ def get_valid_inputs(Map margs){
     }
     // a sample sheet only makes sense in the case of a directory with
     // sub-directories
-    if (margs.sample_sheet && !dir_has_subdirs) {
+    if (margs.sample_sheet && !sub_dirs_with_fastq_files) {
         error "Sample sheet was provided, but input does not contain " +
             "sub-directories with FASTQ files."
     }
@@ -412,7 +407,7 @@ def get_sample_sheet(Path sample_sheet) {
     // done.
     ch_err = validate_sample_sheet(sample_sheet).map {
         // check if there was an error message
-        if (it) error "Invalid sample sheet: $it"
+        if (it) error "Invalid sample sheet: ${it}."
         it
     }
     // concat the channel holding the path to the sample sheet to `ch_err` and call
