@@ -36,7 +36,7 @@
 │   └── ringo
 │       └── reads1.fastq
 
-# top-level directory --> take case4
+# top-level directory --> take case04
 ├── case04
 │   ├── reads01.fastq
 │   ├── reads02.fastq.gz
@@ -101,7 +101,7 @@
 │   └── unclassified
 │       └── reads0.fastq
 
-# throw error 'Input directory ... cannot contain more than one level of sub-directories.'
+# take dir01, dir02, dir03 (we allow sub-sub-dirs as long as they don't contain FASTQ files)
 ├── case09
 │   ├── dir01
 │   │   ├── garbage.txt
@@ -116,6 +116,53 @@
 │       ├── garbage
 │       │   └── garbage.txt
 │       └── reads0.fastq
+
+# throw error 'Input directory ... cannot contain more than one level of sub-directories with FASTQ files.'
+├── case10
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   └── dir03
+│       ├── garbage
+│       │   ├── garbage.txt
+│       │   └── reads0.fastq
+│       └── reads0.fastq
+
+# throw error 'Invalid sample sheet: values in 'alias' column not unique.'
+├── case11
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
+
+# throw error 'Input directory ... must contain either FASTQ files or sub-directories containing FASTQ files.'
+├── case12
+│   ├── barcode01
+│   ├── barcode02
+│   ├── barcode03
+│   └── sample_sheet.csv
+
+# top-level directory --> take case13 (we ignore sub-dirs that don't contain FASTQ files)
+├── case13
+│   ├── garbage
+│   │   └── garbage.txt
+│   ├── reads01.fastq
+│   ├── reads02.fastq.gz
+│   ├── reads03.fq
+│   └── reads04.fq.gz
 
 # more sample sheets for testing sample sheet validation
 ├── extra_sample_sheets
