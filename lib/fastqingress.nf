@@ -66,7 +66,7 @@ def fastq_ingress(Map arguments)
             [meta, path]
         } .branch { meta, path ->
             // now there can only be two cases:
-            // (i) single FASTQ file (pass to `mv_or_pigz` later)
+            // (i) single FASTQ file (pass to `move_or_compress` later)
             // (ii) dir with multiple fastq files (pass to `fastcat` later)
             single_file: path.isFile()
             dir_with_fastq_files: true
@@ -75,7 +75,7 @@ def fastq_ingress(Map arguments)
         ch_result = fastcat(
             ch_branched.dir_with_fastq_files, margs["fastcat_extra_args"]
         ).concat(
-            ch_branched.single_file | mv_or_pigz | map {
+            ch_branched.single_file | move_or_compress | map {
                 meta, path -> [meta, path, null]
             }
         )
@@ -186,7 +186,7 @@ def watch_path(Map margs) {
 }
 
 
-process mv_or_pigz {
+process move_or_compress {
     label params.process_label
     cpus params.threads
     input:
@@ -203,7 +203,7 @@ process mv_or_pigz {
             """
         } else {
             """
-            cat $input | pigz -p $task.cpus > $out
+            cat $input | bgzip -@ $task.cpus > $out
             """
         }
 }
@@ -228,7 +228,7 @@ process fastcat {
             -f $fastcat_stats_outdir/per-file-stats.tsv \
             $extra_args \
             $input \
-            | pigz -p $task.cpus > $out
+            | bgzip -@ $task.cpus > $out
         """
 }
 
