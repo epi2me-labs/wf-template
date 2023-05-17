@@ -1,12 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 ### Added
 - Optional `required_sample_types` field added to fastqingress. The sample sheet must contain at least one of each sample type provided to be deemed valid.
+- Configuration for running demo data in AWS
+
 ### Changed
 - Removed glibc hack from post-test script
 - Updated LICENSE to BSD-4-Clause
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented `--version`
 - `fastcat_extra_args` option to `fastq_ingress` to pass arbitrary arguments to `fastcat` (defaults to empty string).
 - `fastcat_stats` option to `fastq_ingress` to force generation of `fastcat` stats even when the input is only a single file (default is false).
+
 ### Changed
 - Use `bgzip` for compression instead of `pigz`.
 - pre-commit now uses `flake8` v5.0.4.
@@ -31,10 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed sanitize fastq option.
 - fastq_ingress now removes unclassified read folders by default.
 - Workflow name and version is now more prominently displayed on start
+
 ### Fixed
 - Output argument in Fastqingress homogenised.
 - Sanitize fastq intermittent null object error.
 - Add `*.pyc` and `*.pyo` ignores to wf-template .gitignore
+
 ### Note
 - Bumped version to `v4` to align versioning with Launcher v4
 
@@ -42,25 +47,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - default process label parameter
 - Added `params.wf.example_cmd` list to populate `--help`
+
 ### Changed
 - Update WorkflowMain.groovy to provide better `--help`
 
 ## [v0.1.0]
 ### Changed
 - `sample_name` to `sample_id` throughout to mathc MinKNOW samplesheet.
+
 ### Added
 - Singularity profile include in base config.
 - Numerous other changes that have been lost to the mists of time.
 
 ## [v0.0.7]
 ### Added
-- Fastqingress module for common handling of (possibly
-  multiplexed) inputs.
-- Optimized container size through removal of various
-  conda cruft.
+- Fastqingress module for common handling of (possibly multiplexed) inputs.
+- Optimized container size through removal of various conda cruft.
+
 ### Changed
 - Use mamba by default for building conda environments.
 - Cut down README to items specific to workflow.
+
 ### Fixed
 - Incorrect specification of conda environment file in Nextflow config.
 
@@ -87,5 +94,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create pre-releases in CI from dev branch.
 
 ## [v0.0.1]
+* First release.
 
-First release.
