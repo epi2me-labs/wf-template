@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Removed glibc hack from post-test script
 - Updated LICENSE to BSD-4-Clause
+- Enum choices are enumerated in the `--help` output
+- Enum choices are enumerated as part of the error message when a user has selected an invalid choice
 
 ## [v4.0.0]
 ### Added
