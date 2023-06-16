@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v4.1.0]
 ### Added
 - Optional `required_sample_types` field added to fastqingress. The sample sheet must contain at least one of each sample type provided to be deemed valid.
 - Configuration for running demo data in AWS
 
 ### Changed
+- Updated GitHub issue templates to force capture of more information.
 - Removed glibc hack from post-test script
 - Updated LICENSE to BSD-4-Clause
 - Enum choices are enumerated in the `--help` output
