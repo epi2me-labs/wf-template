@@ -1,4 +1,6 @@
 # top-level directory --> take case01
+# `reads0` and `reads1` have their own run IDs and `reads2` has a mixture of
+# both (unordered)
 ├── case01
 │   ├── garbage.txt
 │   ├── reads0.fastq
