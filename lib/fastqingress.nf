@@ -50,7 +50,17 @@ def fastq_ingress(Map arguments)
     def ch_result
     if (margs.fastcat_stats) {
         // run fastcat regardless of input type
-        ch_result = fastcat(ch_input.reads_found, margs["fastcat_extra_args"])
+        ch_result = fastcat(ch_input.reads_found, margs["fastcat_extra_args"]).map {
+            meta, reads, stats ->
+                // extract run_ids parsed by fastcat into metadata
+                ArrayList run_ids = stats.resolve("run_ids").splitText().collect {
+                    it.strip()
+                }
+                // `meta + [...]` returns a new map which is handy to avoid any
+                // modifying-maps-in-closures weirdness
+                // See https://github.com/nextflow-io/nextflow/issues/2660
+                [meta + [run_ids: run_ids], reads, stats]
+        }
     } else {
         // the fastcat stats were not requested --> run fastcat only on directories with
         // more than one FASTQ file (and not on single files or directories with a
@@ -187,7 +197,8 @@ def watch_path(Map margs) {
 
 
 process move_or_compress {
-    label params.process_label
+    label "fastq_ingress"
+    label "wf_common"
     cpus 1
     input:
         tuple val(meta), path(input)
@@ -210,7 +221,8 @@ process move_or_compress {
 
 
 process fastcat {
-    label params.process_label
+    label "fastq_ingress"
+    label "wf_common"
     cpus 3
     input:
         tuple val(meta), path(input)
@@ -229,6 +241,7 @@ process fastcat {
             $extra_args \
             $input \
             | bgzip -@ $task.cpus > $out
+        csvtk cut -tf runid $fastcat_stats_outdir/per-read-stats.tsv | csvtk del-header | sort | uniq > $fastcat_stats_outdir/run_ids
         """
 }
 
@@ -373,6 +386,7 @@ Map create_metamap(Map arguments) {
         kwargs: [
             "barcode": null,
             "type": "test_sample",
+            "run_ids": [],
         ],
         name: "create_metamap",
     )
@@ -430,8 +444,9 @@ def get_sample_sheet(Path sample_sheet, ArrayList required_sample_types) {
  * @return: string (optional)
  */
 process validate_sample_sheet {
-    label params.process_label
-    input: 
+    label "fastq_ingress"
+    label "wf_common"
+    input:
         path csv
         val required_sample_types
     output: stdout

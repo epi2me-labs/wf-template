@@ -6,9 +6,11 @@ include:
 variables:
     # We'll use the single-file case for these runs
     NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz"
-    CI_FLAVOUR: "new" # set to "classic" for old-style CI
     TEST_CMD: "bash test/run_fastq_ingress_test.sh"
     S3_TEST_DATA: "s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/cw-1019/test_data"
+    CI_FLAVOUR: "new"
+    PYTEST_CONTAINER_NAME: "wf-common"
+    PYTEST_CONTAINER_CONFIG_KEY: "common_sha="
 
 
 # Remove this block in downstream templates

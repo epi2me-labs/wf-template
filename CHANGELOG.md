@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v4.2.0]
 ### Added
 - 'CWUtil.mutateParam(params, k, v)' can be used to mutate the contents of the global Nextflow parameter map
+### Changed
+- Workflow uses `wf-common` container by default
+- Sample `meta` contains `run_ids` key which lists all Run IDs observed by `fastcat`
+- `fastqingress` processes additionally labelled with `fastq_ingress`
+### Removed
+- `wf-template` container is no longer used
+- `params.process_label` is no longer required
 
 ## [v4.1.0]
 ### Added

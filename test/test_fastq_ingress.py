@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import pathlib
+import re
 import sys
 
 import pandas as pd
@@ -19,22 +20,34 @@ def is_fastq_file(fname):
     return any(map(lambda ext: fname.endswith(ext), FASTQ_EXTENSIONS))
 
 
+def get_fastq_files(path):
+    """Return a list of FASTQ files for a given path."""
+    return filter(is_fastq_file, os.listdir(path)) if os.path.isdir(path) else [path]
+
+
 def create_metadict(**kwargs):
     """Create dict from metadata and check if required values are present."""
     if "alias" not in kwargs or kwargs["alias"] is None:
         raise ValueError("Meta data needs 'alias'.")
-    defaults = dict(barcode=None, type="test_sample")
+    defaults = dict(barcode=None, type="test_sample", run_ids=[])
+    if "run_ids" in kwargs:
+        # cast to sorted list to compare to workflow output
+        kwargs["run_ids"] = sorted(list(kwargs["run_ids"]))
     defaults.update(kwargs)
     return defaults
 
 
-def get_fastq_entries(fastq_file):
-    """Create a list of names of entries in a FASTQ file."""
-    entries = []
+def get_fastq_names_and_runids(fastq_file):
+    """Create a dict of names and run_ids for entries in a FASTQ file."""
+    names = []
+    run_ids = set()
     with pysam.FastxFile(fastq_file) as f:
         for entry in f:
-            entries.append(entry.name)
-    return entries
+            names.append(entry.name)
+            (run_id,) = re.findall(r"runid=([^\s]+)", entry.comment) or [None]
+            if run_id:
+                run_ids.add(run_id)
+    return dict(names=names, run_ids=run_ids)
 
 
 def args():
@@ -96,12 +109,14 @@ def get_valid_inputs(input_path, sample_sheet, params):
     valid_inputs = []
     if os.path.isfile(input_path):
         # handle file case
+        fastq_entries = get_fastq_names_and_runids(input_path)
         valid_inputs.append(
             [
                 create_metadict(
                     alias=params["sample"]
                     if params["sample"] is not None
-                    else os.path.basename(input_path).split(".")[0]
+                    else os.path.basename(input_path).split(".")[0],
+                    run_ids=fastq_entries["run_ids"],
                 ),
                 input_path,
             ]
@@ -126,12 +141,19 @@ def get_valid_inputs(input_path, sample_sheet, params):
                 "nor FASTQ files."
             )
         if top_dir_has_fastq_files:
+            run_ids = set()
+            for fastq_file in get_fastq_files(input_path):
+                curr_fastq_entries = get_fastq_names_and_runids(
+                    pathlib.Path(input_path) / fastq_file
+                )
+                run_ids.update(curr_fastq_entries["run_ids"])
             valid_inputs.append(
                 [
                     create_metadict(
                         alias=params["sample"]
                         if params["sample"] is not None
-                        else os.path.basename(input_path)
+                        else os.path.basename(input_path),
+                        run_ids=run_ids,
                     ),
                     input_path,
                 ]
@@ -157,9 +179,23 @@ def get_valid_inputs(input_path, sample_sheet, params):
                     continue
                 # only process further if sub-dir has fastq files
                 if any(map(is_fastq_file, files)):
+                    run_ids = set()
+                    for fastq_file in get_fastq_files(subdir):
+                        curr_fastq_entries = get_fastq_names_and_runids(
+                            pathlib.Path(subdir) / fastq_file
+                        )
+                        run_ids.update(curr_fastq_entries["run_ids"])
+
                     barcode = os.path.basename(subdir)
                     valid_inputs.append(
-                        [create_metadict(alias=barcode, barcode=barcode), subdir]
+                        [
+                            create_metadict(
+                                alias=barcode,
+                                barcode=barcode,
+                                run_ids=run_ids,
+                            ),
+                            subdir,
+                        ]
                     )
     # parse the sample sheet in case there was one
     if sample_sheet is not None:
@@ -175,8 +211,15 @@ def get_valid_inputs(input_path, sample_sheet, params):
         # reset `valid_inputs`
         valid_inputs = []
         for barcode, meta in sample_sheet.iterrows():
-            path = valid_inputs_dict.get(barcode)  # returns `None` if key not found
-            valid_inputs.append([create_metadict(**dict(meta)), path])
+            path = valid_inputs_dict.get(barcode)
+            run_ids = set()
+            if path is not None:
+                for fastq_file in get_fastq_files(path):
+                    curr_fastq_entries = get_fastq_names_and_runids(
+                        pathlib.Path(path) / fastq_file
+                    )
+                    run_ids.update(curr_fastq_entries["run_ids"])
+            valid_inputs.append([create_metadict(**dict(meta), run_ids=run_ids), path])
     return valid_inputs
 
 
@@ -216,17 +259,20 @@ def test_fastq_entry_names(prepare):
             # this sample sheet entry had no input dir (or no reads)
             continue
         # get FASTQ entries in the result file produced by the workflow
-        fastq_entries = get_fastq_entries(
+        fastq_entries = get_fastq_names_and_runids(
             fastq_ingress_results_dir / meta["alias"] / "seqs.fastq.gz"
         )
         # now collect the FASTQ entries from the individual input files
-        exp_fastq_entries = []
-        fastq_files = (
-            filter(is_fastq_file, os.listdir(path)) if os.path.isdir(path) else [path]
-        )
-        for fastq_file in fastq_files:
-            exp_fastq_entries += get_fastq_entries(pathlib.Path(path) / fastq_file)
-        assert set(fastq_entries) == set(exp_fastq_entries)
+        exp_fastq_names = []
+        exp_fastq_runids = []
+        for fastq_file in get_fastq_files(path):
+            curr_fastq_entries = get_fastq_names_and_runids(
+                pathlib.Path(path) / fastq_file
+            )
+            exp_fastq_names += curr_fastq_entries["names"]
+            exp_fastq_runids += curr_fastq_entries["run_ids"]
+        assert set(fastq_entries["names"]) == set(exp_fastq_names)
+        assert set(fastq_entries["run_ids"]) == set(exp_fastq_runids)
 
 
 def test_stats_present(prepare):
@@ -265,5 +311,5 @@ def test_metamap(prepare):
 
 if __name__ == "__main__":
     # trigger pytest
-    ret_code = pytest.main([os.path.realpath(__file__)])
+    ret_code = pytest.main([os.path.realpath(__file__), "-vv"])
     sys.exit(ret_code)
