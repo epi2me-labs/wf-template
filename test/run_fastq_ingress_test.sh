@@ -42,9 +42,9 @@ wf_output_dir="--wf-output-dir $wf_output_dir"
 [[ -n $sample_sheet ]] && sample_sheet="--sample_sheet $sample_sheet"
 
 # get container hash from config
-img_hash=$(grep 'container_sha.\?=' nextflow.config | grep -oE 'sha[0-9,a-f,A-F]+')
+img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE 'sha[0-9,a-f,A-F]+')
 
 # run test
 docker run -v "$PWD":"$PWD" \
-    ontresearch/wf-template:"$img_hash" \
+    ontresearch/wf-common:"$img_hash" \
     python "$PWD"/test/test_fastq_ingress.py $fastq $wf_output_dir $sample_sheet
