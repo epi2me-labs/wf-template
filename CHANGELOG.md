@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow uses `wf-common` container by default
 - Sample `meta` contains `run_ids` key which lists all Run IDs observed by `fastcat`
 - `fastqingress` processes additionally labelled with `fastq_ingress`
+- Use literal names to stage process inputs wherever possible and wrap filenames in quotes otherwise.
+
 ### Removed
 - `wf-template` container is no longer used
 - `params.process_label` is no longer required

@@ -201,6 +201,7 @@ process move_or_compress {
     label "wf_common"
     cpus 1
     input:
+        // don't stage `input` with a literal because we check the file extension
         tuple val(meta), path(input)
     output:
         tuple val(meta), path("seqs.fastq.gz")
@@ -210,11 +211,11 @@ process move_or_compress {
             // we need to take into account that the file could already be named
             // "seqs.fastq.gz" in which case `mv` would fail
             """
-            [ "$input" == "$out" ] || mv $input $out
+            [ "$input" == "$out" ] || mv "$input" $out
             """
         } else {
             """
-            cat $input | bgzip -@ $task.cpus > $out
+            cat "$input" | bgzip -@ $task.cpus > $out
             """
         }
 }
@@ -225,7 +226,7 @@ process fastcat {
     label "wf_common"
     cpus 3
     input:
-        tuple val(meta), path(input)
+        tuple val(meta), path("input")
         val extra_args
     output:
         tuple val(meta), path("seqs.fastq.gz"), path("fastcat_stats")
@@ -239,7 +240,7 @@ process fastcat {
             -r $fastcat_stats_outdir/per-read-stats.tsv \
             -f $fastcat_stats_outdir/per-file-stats.tsv \
             $extra_args \
-            $input \
+            input \
             | bgzip -@ $task.cpus > $out
         csvtk cut -tf runid $fastcat_stats_outdir/per-read-stats.tsv | csvtk del-header | sort | uniq > $fastcat_stats_outdir/run_ids
         """
@@ -447,13 +448,13 @@ process validate_sample_sheet {
     label "fastq_ingress"
     label "wf_common"
     input:
-        path csv
+        path "sample_sheet.csv"
         val required_sample_types
     output: stdout
     script:
     String req_types_arg = required_sample_types ? "--required_sample_types "+required_sample_types.join(" ") : ""
     """
-    workflow-glue check_sample_sheet $csv $req_types_arg
+    workflow-glue check_sample_sheet sample_sheet.csv $req_types_arg
     """
 }
 
