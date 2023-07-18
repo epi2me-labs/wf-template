@@ -11,7 +11,9 @@ from workflow_glue import check_sample_sheet
 # sample types to be tested.
 ERROR_MESSAGES = [
     ("sample_sheet_1.csv", "Sample sheet requires at least 1 of ", "positive_control"),
-    ("sample_sheet_2.csv", "Not an allowed sample type: ", "invalid_sample_type")
+    ("sample_sheet_2.csv", "Not an allowed sample type: ", "invalid_sample_type"),
+    ("missing.csv", "Could not open sample sheet", ""),
+    ("utf8_bom.csv", "", ""),  # check this does not fail
 ]
 
 
@@ -38,4 +40,7 @@ def test_check_sample_sheet(
     except SystemExit:
         pass
     out, _ = capsys.readouterr()
-    assert out.startswith(expected_error_message)
+    if expected_error_message == "":
+        assert len(out.strip()) == 0
+    else:
+        assert out.startswith(expected_error_message)
