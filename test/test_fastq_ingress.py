@@ -302,8 +302,11 @@ def test_stats_present(prepare):
 
 def test_metamap(prepare):
     """Test if the metamap in the `fastq_ingress` results is as expected."""
-    fastq_ingress_results_dir, valid_inputs, _ = prepare
+    fastq_ingress_results_dir, valid_inputs, params = prepare
     for meta, _ in valid_inputs:
+        # if there were no fastcat stats, we can't expect run IDs in the metamap
+        if not params["wf"]["fastcat_stats"]:
+            meta["run_ids"] = []
         with open(fastq_ingress_results_dir / meta["alias"] / "metamap.json", "r") as f:
             metamap = json.load(f)
         assert meta == metamap
