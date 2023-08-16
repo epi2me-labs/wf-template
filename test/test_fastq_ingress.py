@@ -34,6 +34,7 @@ def create_metadict(**kwargs):
         # cast to sorted list to compare to workflow output
         kwargs["run_ids"] = sorted(list(kwargs["run_ids"]))
     defaults.update(kwargs)
+    defaults["alias"] = defaults["alias"].replace(" ", "_")
     return defaults
 
 

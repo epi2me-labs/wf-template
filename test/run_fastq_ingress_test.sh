@@ -36,8 +36,9 @@ fi
 [[ ( -n $sample_sheet ) && ( $sample_sheet != /* ) ]] &&
     sample_sheet="$PWD/$sample_sheet"
 
-# add flags to parameters
-fastq="--fastq $fastq"
+# add flags to parameters (need an array for `fastq` here as there might be spaces in
+# the filename)
+fastq=("--fastq" "$fastq")
 wf_output_dir="--wf-output-dir $wf_output_dir"
 [[ -n $sample_sheet ]] && sample_sheet="--sample_sheet $sample_sheet"
 
@@ -47,4 +48,4 @@ img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE 'sha[0-9,a-f,A-F]+')
 # run test
 docker run -v "$PWD":"$PWD" \
     ontresearch/wf-common:"$img_hash" \
-    python "$PWD"/test/test_fastq_ingress.py $fastq $wf_output_dir $sample_sheet
+    python "$PWD"/test/test_fastq_ingress.py "${fastq[@]}" $wf_output_dir $sample_sheet

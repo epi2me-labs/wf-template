@@ -206,12 +206,17 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case13"
               AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case13 $$PWD/$$CI_PROJECT_NAME
+
         - if: $MATRIX_NAME == "case14"
           variables:
               NF_WORKFLOW_OPTS: "--fastq 'test_data/fastq_ingress/case14/reads01 space.fastq'"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD 'test_data/fastq_ingress/case14/reads01 space.fastq' $$PWD/$$CI_PROJECT_NAME
+
         - if: $MATRIX_NAME == "case15"
           variables:
               NF_WORKFLOW_OPTS: "--fastq 'test_data/fastq_ingress/case 15'"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD 'test_data/fastq_ingress/case 15' $$PWD/$$CI_PROJECT_NAME
+
         - if: $MATRIX_NAME == "mutateParams"
           variables:
               NF_WORKFLOW_OPTS: "--fastq no_reads.gz --mutate_fastq test_data/reads.fastq.gz"
