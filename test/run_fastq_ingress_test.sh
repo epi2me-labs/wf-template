@@ -43,7 +43,7 @@ wf_output_dir="--wf-output-dir $wf_output_dir"
 [[ -n $sample_sheet ]] && sample_sheet="--sample_sheet $sample_sheet"
 
 # get container hash from config
-img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE 'sha[0-9,a-f,A-F]+')
+img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE '(mr[0-9]+_)?sha[0-9,a-f,A-F]+')
 
 # run test
 docker run -v "$PWD":"$PWD" \
