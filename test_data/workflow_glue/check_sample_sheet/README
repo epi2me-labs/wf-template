@@ -1,0 +1,8 @@
+sample_sheet_1.csv          # correct
+sample_sheet_2.csv          # barcode column missing
+sample_sheet_3.csv          # alias column missing
+sample_sheet_4.csv          # barcode column not unique
+sample_sheet_5.csv          # alias column not unique
+sample_sheet_6.csv          # malformed CSV (unequal number of fields)
+sample_sheet_7.csv          # type column contains disallowed values
+utf8_bom.csv                # MS Excel byte order mark weirdness
