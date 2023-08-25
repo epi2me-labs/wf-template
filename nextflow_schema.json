@@ -73,6 +73,27 @@
             "help_text": "These advanced options do not need to be changed for typical use, but allow fine tuning of workflows for users who want more control over the workflow.",
             "properties": {}
         },
+        "multiprocessing_options": {
+            "title": "Multiprocessing Options",
+            "type": "object",
+            "fa_icon": "far fa-gauge-high",
+            "description": "Options for configuring the CPU resources of particular processes in the workflow.",
+            "help_text": "These options do not need to be changed for typical use, but allow fine tuning for users who want more control over the workflow.",
+            "properties": {
+                "threads_a": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Set max number of threads to use for some processes (limited by config executor cpus)"
+                },
+                "threads_b": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 2,
+                    "description": "Set max number of threads to use for some other intense processes (limited by config executor cpus)"
+                }
+            }
+        },
         "misc": {
             "title": "Miscellaneous Options",
             "type": "object",
@@ -113,6 +134,9 @@
             "$ref": "#/definitions/advanced_options"
         },
         {
+            "$ref": "#/definitions/multiprocessing_options"
+        },
+        {
             "$ref": "#/definitions/misc"
         }
     ],
@@ -129,6 +153,10 @@
             "type": "boolean"
         },
         "validate_params": {
+            "type": "boolean",
+            "default": true
+        },
+        "validate_threads": {
             "type": "boolean",
             "default": true
         },
