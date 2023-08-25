@@ -34,7 +34,7 @@ docker-run:
             # TODO: do we really need to run all from s3?
             - MATRIX_NAME: [
                 "single-file", "single-file-s3",
-                "case01", "case01-s3",
+                "case01", "case01-s3", "case01-toomanythreads",
                 "case02", "case02-s3", "case02-no-fastcat_stats", "case02-no-fastcat_stats-s3",
                 "case03", "case03-s3",
                 "case04", "case04-s3",
@@ -74,6 +74,11 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case01"
               AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/fastq_ingress/case01 $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case01-toomanythreads"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case01 --threads_a 10 --threads_b 100"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Validation of thread parameters failed"
 
         - if: $MATRIX_NAME == "case02"
           variables:
