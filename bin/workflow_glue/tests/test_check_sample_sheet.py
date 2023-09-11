@@ -21,6 +21,8 @@ ERROR_MESSAGES = [
     ("sample_sheet_5.csv", "values in 'alias' column not unique", ""),
     ("sample_sheet_6.csv", "Unexpected number of cells in row number 2", ""),
     ("sample_sheet_7.csv", "found unexpected values in 'type' column: ", ""),
+    ("sample_sheet_8.csv", "values in 'barcode' column are different lengths", ""),
+    ("sample_sheet_9.csv", "values in 'barcode' column are incorrect format", ""),
     # misc
     ("missing.csv", "Could not open sample sheet", ""),
     ("utf8_bom.csv", "", ""),  # check this does not fail
