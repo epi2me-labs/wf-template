@@ -32,6 +32,9 @@ def fastq_ingress(Map arguments)
     // either filled by `watchPath` (only emitting files) or by the data of the three
     // input types (single file or dir with fastq or subdirs with fastq).
     def ch_input
+    // container for all observed run_ids
+    Set<String> ingressed_run_ids = new HashSet<String>()
+
     // handle `watchPath` case
     if (margs["watch_path"]) {
         ch_input = watch_path(margs)
@@ -56,6 +59,7 @@ def fastq_ingress(Map arguments)
                 ArrayList run_ids = stats.resolve("run_ids").splitText().collect {
                     it.strip()
                 }
+                ingressed_run_ids += run_ids
                 // `meta + [...]` returns a new map which is handy to avoid any
                 // modifying-maps-in-closures weirdness
                 // See https://github.com/nextflow-io/nextflow/issues/2660
@@ -90,6 +94,13 @@ def fastq_ingress(Map arguments)
             }
         )
     }
+    // put run_ids somewhere global for trivial access later
+    // bit grim but decouples ingress metadata from workflow main.nf
+    // additionally no need to use CWUtil as we're not overriding any user params
+    ch_result.subscribe onComplete: {
+        params.wf["ingress.run_ids"] = ingressed_run_ids // stuff runids somewhere global
+    }
+    // finally return the samples [metadata, path] channel
     return ch_result.concat(ch_input.no_reads_found.map { [*it, null] })
 }
 
