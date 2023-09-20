@@ -1,0 +1,46 @@
+# top-level directory with BAM and uBAM files (causes ""Found mixed headers in
+# (u)BAM files of sample ..." error)
+├── case01
+│   ├── garbage.txt
+│   ├── reads0.bam
+│   ├── reads1.ubam
+│   ├── reads2.bam
+│   └── reads3.bam
+
+# take dir01, dir02, dir03
+├── case02
+│   ├── dir1
+│   │   ├── reads0.bam
+│   │   ├── reads1.bam
+│   │   └── reads2.bam
+│   ├── dir2
+│   │   ├── reads0.bam
+│   │   ├── reads1.bam
+│   │   └── reads2.bam
+│   └── dir3
+│       ├── reads0.bam
+│       ├── reads1.bam
+│       └── reads2.bam
+
+# dir01 has only BAM files, dir02 has only uBAM files, dir03 has a mixture; the
+# sample sheet contains dir1, dir2, and dir4 (for which there is no directory)
+├── case03
+│   ├── dir1
+│   │   ├── reads0.bam
+│   │   ├── reads1.bam
+│   │   └── reads2.bam
+│   ├── dir2
+│   │   ├── reads0.ubam
+│   │   ├── reads1.ubam
+│   │   └── reads2.ubam
+│   ├── dir3
+│   │   ├── reads0.bam
+│   │   └── reads1.ubam
+│   └── sample_sheet.csv
+
+# both files are BAM, but the `@SQ` lines in their headers are ordered
+# differently leading to an error ("Found mixed headers in (u)BAM files of
+# sample 'case04'.")
+├── case04
+│   ├── reads0.bam
+│   └── reads1.bam

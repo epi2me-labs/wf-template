@@ -13,10 +13,11 @@
 import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
 
-include { fastq_ingress } from './lib/fastqingress'
+include { fastq_ingress; xam_ingress } from './lib/fastqingress'
 include {
     getParams;
 } from './lib/common'
+
 
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
@@ -37,7 +38,7 @@ process makeReport {
     label "wftemplate"
     input:
         val metadata
-        path per_read_stats
+        tuple path(per_read_stats, stageAs: "stats/stats*.tsv.gz"), val(no_stats)
         path "versions/*"
         path "params.json"
     output:
@@ -45,8 +46,7 @@ process makeReport {
     script:
         String report_name = "wf-template-report.html"
         String metadata = new JsonBuilder(metadata).toPrettyString()
-        String stats_args = \
-            (per_read_stats.name == OPTIONAL_FILE.name) ? "" : "--stats $per_read_stats"
+        String stats_args = no_stats ? "" : "--stats stats"
     """
     echo '${metadata}' > metadata.json
     workflow-glue report $report_name \
@@ -78,30 +78,29 @@ process output {
     """
 }
 
-// Creates a new directory named after the sample alias and moves the fastcat results
+// Creates a new directory named after the sample alias and moves the ingress results
 // into it.
-process collectFastqIngressResultsInDir {
+process collectIngressResultsInDir {
     label "wftemplate"
     input:
-        // both the fastcat seqs as well as stats might be `OPTIONAL_FILE` --> stage in
-        // different sub-directories to avoid name collisions
-        tuple val(meta), path(concat_seqs, stageAs: "seqs/*"), path(fastcat_stats,
-            stageAs: "stats/*")
+        // both inputs might be `OPTIONAL_FILE` --> stage in different sub-directories
+        // to avoid name collisions
+        tuple val(meta),
+            path(reads, stageAs: "reads/*"),
+            path(stats, stageAs: "stats/*")
     output:
         // use sub-dir to avoid name clashes (in the unlikely event of a sample alias
-        // being `seq` or `stats`)
+        // being `reads` or `stats`)
         path "out/*"
     script:
     String outdir = "out/${meta["alias"]}"
     String metaJson = new JsonBuilder(meta).toPrettyString()
-    String concat_seqs = \
-        (concat_seqs.fileName.name == OPTIONAL_FILE.name) ? "" : concat_seqs
-    String fastcat_stats = \
-        (fastcat_stats.fileName.name == OPTIONAL_FILE.name) ? "" : fastcat_stats
+    String reads = reads.fileName.name == OPTIONAL_FILE.name ? "" : reads
+    String stats = stats.fileName.name == OPTIONAL_FILE.name ? "" : stats
     """
     mkdir -p $outdir
     echo '$metaJson' > metamap.json
-    mv metamap.json $concat_seqs $fastcat_stats $outdir
+    mv metamap.json $reads $stats $outdir
     """
 }
 
@@ -110,23 +109,31 @@ workflow pipeline {
     take:
         reads
     main:
-        per_read_stats = reads.map {
-            it[2] ? it[2].resolve('per-read-stats.tsv') : null
+        per_read_stats = reads.flatMap {
+            it[2] ? file(it[2].resolve('*read*.tsv.gz')) : null
         }
-        | collectFile ( keepHeader: true )
-        | ifEmpty ( OPTIONAL_FILE )
+        | ifEmpty(OPTIONAL_FILE)
         software_versions = getVersions()
         workflow_params = getParams()
         metadata = reads.map { it[0] }.toList()
         report = makeReport(
-            metadata, per_read_stats, software_versions.collect(), workflow_params
+            metadata,
+            // having a list of files with the same name or an `OPTIONAL_FILE` is quite
+            // annoying as we need to avoid naming collisions but this will also
+            // overwrite the name of the `OPTIONAL_FILE`. We therefore add an extra
+            // boolean designating whether there were stats or not.
+            per_read_stats.collect() | map { file_list ->
+                [file_list, file_list[0] == OPTIONAL_FILE]
+            },
+            software_versions,
+            workflow_params
         )
         reads
         // replace `null` with path to optional file
         | map { [ it[0], it[1] ?: OPTIONAL_FILE, it[2] ?: OPTIONAL_FILE ] }
-        | collectFastqIngressResultsInDir
+        | collectIngressResultsInDir
     emit:
-        fastq_ingress_results = collectFastqIngressResultsInDir.out
+        ingress_results = collectIngressResultsInDir.out
         report
         workflow_params
         // TODO: use something more useful as telemetry
@@ -145,18 +152,34 @@ workflow {
         CWUtil.mutateParam(params, "fastq", params.mutate_fastq)
     }
 
-    samples = fastq_ingress([
-        "input":params.fastq,
-        "sample":params.sample,
-        "sample_sheet":params.sample_sheet,
-        "analyse_unclassified":params.analyse_unclassified,
-        "fastcat_stats": params.wf.fastcat_stats,
-        "fastcat_extra_args": "",
-        "required_sample_types": [] ])
+    if (params.fastq) {
+        samples = fastq_ingress([
+            "input":params.fastq,
+            "sample":params.sample,
+            "sample_sheet":params.sample_sheet,
+            "analyse_unclassified":params.analyse_unclassified,
+            "stats": params.wf.fastcat_stats,
+            "fastcat_extra_args": "",
+            "required_sample_types": [],
+            "watch_path": params.wf.watch_path,
+        ])
+    } else {
+        // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
+        // by the schema)
+        samples = xam_ingress([
+            "input":params.bam,
+            "sample":params.sample,
+            "sample_sheet":params.sample_sheet,
+            "analyse_unclassified":params.analyse_unclassified,
+            "allow_unaligned": params.wf.allow_unaligned,
+            "stats": params.wf.bamstats,
+            "watch_path": params.wf.watch_path,
+        ])
+    }
 
     pipeline(samples)
-    pipeline.out.fastq_ingress_results
-    | map { [it, "fastq_ingress_results"] }
+    pipeline.out.ingress_results
+    | map { [it, "${params.fastq ? "fastq" : "xam"}_ingress_results"] }
     | concat (
         pipeline.out.report.concat(pipeline.out.workflow_params)
         | map { [it, null] }
