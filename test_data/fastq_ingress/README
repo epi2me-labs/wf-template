@@ -38,7 +38,7 @@
 │   └── ringo
 │       └── reads1.fastq
 
-# top-level directory --> take case04
+# top-level directory but with all possible FASTQ file extensions --> take case04
 ├── case04
 │   ├── reads01.fastq
 │   ├── reads02.fastq.gz
