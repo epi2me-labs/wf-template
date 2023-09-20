@@ -13,7 +13,7 @@
 import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
 
-include { fastq_ingress; xam_ingress } from './lib/fastqingress'
+include { fastq_ingress; xam_ingress } from './lib/ingress'
 include {
     getParams;
 } from './lib/common'
