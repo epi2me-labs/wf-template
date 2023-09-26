@@ -131,7 +131,7 @@ def test_entry_names_and_run_ids(prepare):
         for file in target_files:
             if (
                 input_type == "bam"
-                and not params["wf"]["allow_unaligned"]
+                and not params["wf"]["keep_unaligned"]
                 and util.is_unaligned(file)
             ):
                 continue

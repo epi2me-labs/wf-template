@@ -208,14 +208,14 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
                     meta.update(dict(sample_sheet_entry))
                     valid_inputs.append([create_metadict(**dict(meta)), path])
     # Finally, in case of XAM, loop over the valid inputs again and check if
-    # they are uBAM. If so and not `allow_unaligned`, set the path to `None` and
+    # they are uBAM. If so and not `keep_unaligned`, set the path to `None` and
     # the run IDs to `[]`.
     if input_type == "bam":
         valid_inputs_tmp = []
         for meta, path in valid_inputs:
             if path is not None:
                 meta["is_unaligned"] = is_unaligned(path)
-                if meta.get("is_unaligned") and not params["wf"]["allow_unaligned"]:
+                if meta.get("is_unaligned") and not params["wf"]["keep_unaligned"]:
                     path = None
                     meta["run_ids"] = []
             valid_inputs_tmp.append([meta, path])

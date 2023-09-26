@@ -56,9 +56,9 @@ docker-run:
                 "xam-case02-no-bamstats",
                 "xam-case03",
                 "xam-case03-sample_sheet",
-                "xam-case03-allow_unaligned-sample_sheet",
+                "xam-case03-keep_unaligned-sample_sheet",
                 "xam-case03-barcode02",  # test_data/xam_ingress/case03/barcode02 contains only uBAM
-                "xam-case03-barcode02-allow_unaligned",
+                "xam-case03-barcode02-keep_unaligned",
                 ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -264,9 +264,9 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'barcode03'."
-        - if: $MATRIX_NAME == "xam-case03-allow_unaligned"
+        - if: $MATRIX_NAME == "xam-case03-keep_unaligned"
           variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --allow_unaligned"
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --wf.keep_unaligned"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'barcode03'."
         - if: $MATRIX_NAME == "xam-case03-sample_sheet"
@@ -275,9 +275,9 @@ docker-run:
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
                 && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
-        - if: $MATRIX_NAME == "xam-case03-allow_unaligned-sample_sheet"
+        - if: $MATRIX_NAME == "xam-case03-keep_unaligned-sample_sheet"
           variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --allow_unaligned"
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
                 && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
@@ -285,9 +285,9 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03/barcode02"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case03/barcode02 bam $$PWD/$$CI_PROJECT_NAME
-        - if: $MATRIX_NAME == "xam-case03-barcode02-allow_unaligned"
+        - if: $MATRIX_NAME == "xam-case03-barcode02-keep_unaligned"
           variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03/barcode02 --allow_unaligned"
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03/barcode02 --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case03/barcode02 bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case04"

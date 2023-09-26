@@ -117,7 +117,7 @@ def fastq_ingress(Map arguments)
  * Take a map of input arguments, find valid (u)BAM inputs, and return a channel
  * with elements of `[metamap, reads.bam | null, path-to-bamstats-results | null]`.
  * The second item is `null` for sample sheet entries without a matching barcode
- * directory or samples containing only uBAM files when `allow_unaligned` is `false`.
+ * directory or samples containing only uBAM files when `keep_unaligned` is `false`.
  * The last item is `null` if `bamstats` was not run (it is only run when `stats: true`).
  *
  * @param arguments: map with arguments containing
@@ -128,7 +128,7 @@ def fastq_ingress(Map arguments)
  *  - "sample_sheet": path to CSV sample sheet
  *  - "analyse_unclassified": boolean whether to keep unclassified reads
  *  - "stats": boolean whether to run `bamstats`
- *  - "allow_unaligned": boolean whether to include uBAM files
+ *  - "keep_unaligned": boolean whether to include uBAM files
  *  - "required_sample_types": list of required sample types in the sample sheet
  *  - "watch_path": boolean whether to use `watchPath` and run in streaming mode
  * @return: channel of `[Map(alias, barcode, type, ...), Path|null, Path|null]`.
@@ -136,13 +136,13 @@ def fastq_ingress(Map arguments)
  *  `.bam` file with the (potentially merged) sequences and the third is
  *  the path to the directory with the `bamstats` statistics. The second element is
  *  `null` for sample sheet entries for which no corresponding barcode directory was
- *  found and for samples with only uBAM files when `allow_unaligned: false`. The third
+ *  found and for samples with only uBAM files when `keep_unaligned: false`. The third
  *  element is `null` if `bamstats` was not run.
  */
 def xam_ingress(Map arguments)
 {
     // check arguments
-    Map margs = parse_arguments(arguments, ["allow_unaligned": false])
+    Map margs = parse_arguments(arguments, ["keep_unaligned": false])
 
     // we only accept BAM or uBAM for now (i.e. no SAM or CRAM)
     ArrayList xam_extensions = [".bam", ".ubam"]
@@ -175,7 +175,7 @@ def xam_ingress(Map arguments)
         // set `paths` to `null` for uBAM samples if unallowed (they will be added to
         // the results channel in shape of `[meta, null]` at the end of the function
         // (alongside the sample sheet entries without matching barcode dirs)
-        if (!margs["allow_unaligned"] && meta["is_unaligned"]){
+        if (!margs["keep_unaligned"] && meta["is_unaligned"]){
             paths = null
         }
         // get the number of files (`paths` can be a list, a single path, or `null`)
@@ -274,7 +274,8 @@ process catSortBams {
     output: tuple val(meta), path("reads.bam")
     script:
     """
-    samtools cat input_bams/* | samtools sort - -@ ${task.cpus - 2} -o reads.bam
+    samtools cat -b <(find input_bams/*bam) \
+    | samtools sort - -@ ${task.cpus - 2} -o reads.bam
     """
 }
 
