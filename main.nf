@@ -171,7 +171,7 @@ workflow {
             "sample":params.sample,
             "sample_sheet":params.sample_sheet,
             "analyse_unclassified":params.analyse_unclassified,
-            "allow_unaligned": params.wf.allow_unaligned,
+            "keep_unaligned": params.wf.keep_unaligned,
             "stats": params.wf.bamstats,
             "watch_path": params.wf.watch_path,
         ])
