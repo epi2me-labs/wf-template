@@ -261,7 +261,8 @@ process mergeBams {
     output: tuple val(meta), path("reads.bam")
     shell:
     """
-    samtools merge -@ ${task.cpus - 1} input_bams/* -o reads.bam
+    samtools merge -@ ${task.cpus - 1} \
+        -b <(find input_bams -name 'reads*.bam') -o reads.bam
     """
 }
 
@@ -274,7 +275,7 @@ process catSortBams {
     output: tuple val(meta), path("reads.bam")
     script:
     """
-    samtools cat -b <(find input_bams/*bam) \
+    samtools cat -b <(find input_bams -name 'reads*.bam') \
     | samtools sort - -@ ${task.cpus - 2} -o reads.bam
     """
 }
