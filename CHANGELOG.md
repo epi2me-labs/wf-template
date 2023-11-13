@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `xam_ingress` function for processing (u)BAM data.
 
+### Removed
+- Default local executor CPU and RAM limits.
+
+
 ## [v4.2.0]
 ### Added
 - 'CWUtil.mutateParam(params, k, v)' can be used to mutate the contents of the global Nextflow parameter map
