@@ -7,7 +7,7 @@ get-test_data-from-aws () {
     unzip -q awscliv2.zip
 
     # get test data
-    aws/dist/aws s3 cp --recursive --quiet \
+    aws/dist/aws s3 cp --recursive --quiet --no-sign-request \
         "$S3_TEST_DATA" \
         test_data_from_S3
 }

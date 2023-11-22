@@ -2,6 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
     "title": "epi2me-labs/wf-template",
+    "workflow_title": "Template workflow",
     "description": "Nextflow workflow template repository.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-template/wf-template-demo.tar.gz",
     "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-template/wf-template-demo/aws.nextflow.config",
@@ -159,8 +160,16 @@
             "type": "boolean"
         }
     },
-    "docs": {
-        "intro": "## Introduction\n\nThis section of documentation typically contains an overview of the workflow in terms of motivation\nand bioinformatics methods, listing any key tools or algorithms employed, whilst also describing its\nrange of use-cases and what a suitable input dataset should look like.\n\n",
-        "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [singularity](https://docs.sylabs.io/guides/latest/user-guide/)\n"
+    "resources": {
+        "recommended": {
+            "cpus": 2,
+            "memory": "2GB"
+        },
+        "minimum": {
+            "cpus": 2,
+            "memory": "2GB"
+        },
+        "run_time": "5 minutes per sample",
+        "arm_support": true 
     }
 }
