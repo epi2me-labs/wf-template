@@ -19,7 +19,7 @@ This workflow can be used for the following:
 
 ## Compute requirements
 
-Recommended requirement:
+Recommended requirements:
 
 + CPUs = 2
 + memory = 2GB
@@ -39,7 +39,6 @@ ARM processor support: True
 ## Install and run
 
 <!---Nextflow text remains the same across workflows, update example cmd and demo data sections.--->
-
 These are instructions to install and run the workflow on command line. You can also access the workflow via the [EPI2ME application](https://labs.epi2me.io/downloads/).
 
 The workflow uses [Nextflow](https://www.nextflow.io/) to manage compute and software resources, therefore nextflow will need to be installed before attempting to run the workflow.
@@ -59,7 +58,7 @@ nextflow run epi2me-labs/wf-template –help
 ```
 A demo dataset is provided for testing of the workflow. It can be downloaded using:
 ```
-wget <https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com//wf-template/wf-template-demo.tar.gz>
+wget https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com//wf-template/wf-template-demo.tar.gz
 tar -xzvf wf-template-demo.tar.gz
 ```
 The workflow can be run with the demo data using:
@@ -72,7 +71,7 @@ For further information about running a workflow on the cmd line see https://lab
 
 
 
-### Related protocols
+## Related protocols
 
 <!---Hyperlinks to any related protocols that are directly related to this workflow, check the community for any such protocols.--->
 
@@ -154,10 +153,11 @@ If your question is not answered here, please report any issues or suggestions o
 
 
 
-<!---Any other sections that are relevant specifically to this workflow and may be useful to users eg. ## Related blog posts. ## Learning center links.--->
-
 ## Related blog posts
 
 + [Importing third-party workflows into EPI2ME Labs](https://labs.epi2me.io/nexflow-for-epi2melabs/)
 
 See the [EPI2ME website](https://labs.epi2me.io/) for lots of other resources and blog posts.
+
+
+

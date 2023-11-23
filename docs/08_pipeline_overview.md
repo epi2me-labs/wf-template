@@ -1,5 +1,3 @@
-## Pipeline overview
-
 <!---High level numbered list of main steps of the workflow and hyperlink to any tools used. If multiple workflows/different modes perhaps have subheadings and numbered steps. Use nested numbering or bullets where required.--->
 ### 1. Concatenates input files and generate per read stats.
 

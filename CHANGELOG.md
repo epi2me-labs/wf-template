@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Bumped minimum required Nextflow version to 23.04.2.
 - Renamed `lib/fastqingress.nf` to `lib/ingress.nf` to reflect its expanded functionality.
+- The documentation has been updated.
 
 ### Added
 - `xam_ingress` function for processing (u)BAM data.
