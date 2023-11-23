@@ -1,5 +1,3 @@
-## Introduction
-
 <!---This section of documentation typically contains a list of things the workflow can perform also any other intro.--->
 
 This workflow is not intended to be used by end users.

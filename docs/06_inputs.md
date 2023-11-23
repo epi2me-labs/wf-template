@@ -1,5 +1,3 @@
-## Inputs
-
 ### Input Options
 
 | Nextflow parameter name  | Type | Description | Help | Default |

@@ -1,6 +1,4 @@
-## Compute requirements
-
-Recommended requirement:
+Recommended requirements:
 
 + CPUs = 2
 + memory = 2GB
