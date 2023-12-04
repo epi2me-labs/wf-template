@@ -1,12 +1,12 @@
 Recommended requirements:
 
 + CPUs = 2
-+ memory = 2GB
++ Memory = 2GB
 
-Minimum requirement:
+Minimum requirements:
 
 + CPUs = 2
-+ memory = 2GB
++ Memory = 2GB
 
 Approximate run time: 5 minutes per sample
 
