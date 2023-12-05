@@ -18,7 +18,7 @@
     },
     "read-stats-per-read": {
       "filepath": "./fastq_ingress_results/reads/fastcat_stats/per-read-stats.tsv",
-      "title": "Per file read stats",
+      "title": "Per read stats",
       "description": "A TSV with per read stats, including all samples.",
       "mime-type": "text/tsv",
       "optional": false,
