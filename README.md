@@ -58,16 +58,17 @@ nextflow run epi2me-labs/wf-template –help
 ```
 A demo dataset is provided for testing of the workflow. It can be downloaded using:
 ```
-wget https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com//wf-template/wf-template-demo.tar.gz
+wget https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-template/wf-template-demo.tar.gz
 tar -xzvf wf-template-demo.tar.gz
 ```
 The workflow can be run with the demo data using:
 ```
 nextflow run epi2me-labs/wf-template \
---fastq test_data/reads.fastq.gz \
+--fastq wf-template-demo/test_data/reads.fastq.gz \
 -profile standard
 ```
 For further information about running a workflow on the cmd line see https://labs.epi2me.io/wfquickstart/
+
 
 
 
