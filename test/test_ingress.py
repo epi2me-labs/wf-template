@@ -1,5 +1,6 @@
 """Test `fastq_ingress` or `xam_ingess` result of previously run workflow."""
 import argparse
+from itertools import chain
 import json
 from pathlib import Path
 import sys
@@ -161,6 +162,8 @@ def test_stats_present(prepare):
                 "per-file-stats.tsv",
                 "per-read-stats.tsv.gz",
                 "run_ids",
+                "length.hist",
+                "quality.hist"
             ]
         else:
             # `bamstats` we only expect when they were requested
@@ -170,6 +173,10 @@ def test_stats_present(prepare):
                 "bamstats.readstats.tsv.gz",
                 "bamstats.flagstat.tsv",
                 "run_ids",
+                "accuracy.hist",
+                "coverage.hist",
+                "length.hist",
+                "quality.hist"
             ]
         stats_dir = ingress_results_dir / meta["alias"] / stats_dir_name
         # assert that stats are there when we expect them
