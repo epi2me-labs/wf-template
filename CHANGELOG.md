@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `xam_ingress` function for processing (u)BAM data.
-- Git issue bug form requires to report if the demo data was successful.
+- Git issue bug form requires user to report if the demo data was successful.
 
 ### Removed
 - Default local executor CPU and RAM limits.
