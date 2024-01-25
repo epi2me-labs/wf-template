@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Added
+- User provided sample sheet is now published in the output directory as `sample_sheet.csv`.
+
 ## [v4.3.0]
 ### Changed
 - Bumped minimum required Nextflow version to 23.04.2.
