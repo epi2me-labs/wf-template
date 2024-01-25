@@ -726,10 +726,10 @@ def get_sample_sheet(Path sample_sheet, ArrayList required_sample_types) {
     // in STDOUT. Thus, we use the somewhat clunky construct with `concat` and `last`
     // below. This lets the CSV channel only start to emit once the error checking is
     // done.
-    ch_err = validate_sample_sheet(sample_sheet, required_sample_types).map {
+    ch_err = validate_sample_sheet(sample_sheet, required_sample_types).map { stdoutput, sample_sheet_file ->
         // check if there was an error message
-        if (it) error "Invalid sample sheet: ${it}."
-        it
+        if (stdoutput) error "Invalid sample sheet: ${stdoutput}."
+        stdoutput
     }
     // concat the channel holding the path to the sample sheet to `ch_err` and call
     // `.last()` to make sure that the error-checking closure above executes before
@@ -743,13 +743,14 @@ def get_sample_sheet(Path sample_sheet, ArrayList required_sample_types) {
 /**
  * Python script for validating a sample sheet. The script will write messages
  * to STDOUT if the sample sheet is invalid. In case there are no issues, no
- * message is emitted.
+ * message is emitted. The sample sheet will be published to the output dir.
  *
  * @param: path to sample sheet CSV
  * @param: list of required sample types (optional)
  * @return: string (optional)
  */
 process validate_sample_sheet {
+    publishDir params.out_dir, mode: 'copy', overwrite: true
     cpus 1
     label "ingress"
     label "wf_common"
@@ -757,7 +758,8 @@ process validate_sample_sheet {
     input:
         path "sample_sheet.csv"
         val required_sample_types
-    output: stdout
+    output: 
+        tuple stdout, path("sample_sheet.csv")
     script:
     String req_types_arg = required_sample_types ? "--required_sample_types "+required_sample_types.join(" ") : ""
     """
