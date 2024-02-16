@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - User provided sample sheet is now published in the output directory as `sample_sheet.csv`.
+- A check to make sure the sample sheet is a CSV file (and not e.g. `.xlsx`).
 
 ## [v4.3.0]
 ### Changed
