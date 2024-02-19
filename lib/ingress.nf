@@ -86,7 +86,7 @@ def add_run_IDs_to_meta(ch) {
 def fastq_ingress(Map arguments)
 {
     // check arguments
-    Map margs = parse_arguments(arguments, ["fastcat_extra_args": ""])
+    Map margs = parse_arguments("fastq_ingress", arguments, ["fastcat_extra_args": ""])
 
     ArrayList fq_extensions = [".fastq", ".fastq.gz", ".fq", ".fq.gz"]
 
@@ -142,7 +142,7 @@ def fastq_ingress(Map arguments)
 def xam_ingress(Map arguments)
 {
     // check arguments
-    Map margs = parse_arguments(arguments, ["keep_unaligned": false])
+    Map margs = parse_arguments("xam_ingress", arguments, ["keep_unaligned": false])
 
     // we only accept BAM or uBAM for now (i.e. no SAM or CRAM)
     ArrayList xam_extensions = [".bam", ".ubam"]
@@ -489,7 +489,7 @@ process fastcat {
  *  the argument-parsing to be tailored to a particular ingress function)
  * @return: map of parsed arguments
  */
-Map parse_arguments(Map arguments, Map extra_kwargs=[:]) {
+Map parse_arguments(String func_name, Map arguments, Map extra_kwargs=[:]) {
     ArrayList required_args = ["input"]
     Map default_kwargs = [
         "sample": null,
@@ -502,7 +502,7 @@ Map parse_arguments(Map arguments, Map extra_kwargs=[:]) {
     ArgumentParser parser = new ArgumentParser(
         args: required_args,
         kwargs: default_kwargs + extra_kwargs,
-        name: "fastq_ingress")
+        name: func_name)
     return parser.parse_args(arguments)
 }
 
