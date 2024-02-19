@@ -54,6 +54,6 @@ wf_output_dir="--wf-output-dir $wf_output_dir"
 img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE '(mr[0-9]+_)?sha[0-9,a-f,A-F]+')
 
 # run test
-docker run -v "$PWD":"$PWD" \
+docker run -u $(id -u) -v "$PWD":"$PWD" \
     ontresearch/wf-common:"$img_hash" \
     python "$PWD/test/test_ingress.py" "${input_path[@]}" $input_type $wf_output_dir $sample_sheet
