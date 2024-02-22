@@ -166,6 +166,14 @@
 │   ├── reads03.fq
 │   └── reads04.fq.gz
 
+# whitespace in FASTQ file name
+├── case14
+│   └── reads01 space.fastq
+
+# whitespace in directory name
+├── case 15
+│   └── reads01 space.fastq
+
 # Correctly formatted client fields JSON - report will display client fields
 ├── case16
 │   ├── barcode01
