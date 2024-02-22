@@ -49,6 +49,9 @@ docker-run:
                 "case13", "case13-s3",
                 "case14",
                 "case15",
+                "case16",
+                "case16-nonexisting-client-fields",
+                "case17",
                 "mutateParams",
                 "xam-single-file",
                 "xam-case01",
@@ -234,6 +237,25 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq 'test_data/fastq_ingress/case 15'"
               AFTER_NEXTFLOW_CMD: "$TEST_CMD 'test_data/fastq_ingress/case 15' fastq $$PWD/$$CI_PROJECT_NAME"
+
+        - if: $MATRIX_NAME == "case16"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case16 --sample_sheet test_data/fastq_ingress/case16/sample_sheet.csv --client_fields test_data/fastq_ingress/case16/client_fields.json"
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD test_data/fastq_ingress/case16 fastq $$PWD/$$CI_PROJECT_NAME
+                && grep "Dwight" $$PWD/$$CI_PROJECT_NAME/wf-template-report.html
+        
+        - if: $MATRIX_NAME == "case16-nonexisting-client-fields"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case16 --sample_sheet test_data/fastq_ingress/case16/sample_sheet.csv --client_fields test_data/fastq_ingress/case16/client_fields_not_there.json"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/fastq_ingress/case16 fastq $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "case17"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case17 --sample_sheet test_data/fastq_ingress/case17/sample_sheet.csv --client_fields test_data/fastq_ingress/case17/client_fields.json"
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD test_data/fastq_ingress/case17 fastq $$PWD/$$CI_PROJECT_NAME
+                && grep "ERROR: Client info is not correctly formatted" $$PWD/$$CI_PROJECT_NAME/wf-template-report.html
 
         - if: $MATRIX_NAME == "mutateParams"
           variables:

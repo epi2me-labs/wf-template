@@ -1,6 +1,7 @@
 """Create workflow report."""
 import json
 
+from dominate.tags import p
 from ezcharts.components import fastcat
 from ezcharts.components.reports import labs
 from ezcharts.layout.snippets import Tabs
@@ -17,6 +18,30 @@ def main(args):
         "Workflow Template Sequencing report", "wf-template",
         args.params, args.versions)
 
+    client_fields = None
+    if args.client_fields:
+        with open(args.client_fields) as f:
+            try:
+                client_fields = json.load(f)
+            except json.decoder.JSONDecodeError:
+                error = "ERROR: Client info is not correctly formatted"
+
+        with report.add_section("Workflow Metadata", "Workflow Metadata"):
+            if client_fields:
+                df = pd.DataFrame.from_dict(
+                    client_fields, orient="index", columns=["Value"])
+                df.index.name = "Key"
+
+                # Examples from the client had lists as values so join lists
+                # for better display
+                df['Value'] = df.Value.apply(
+                    lambda x: ', '.join(
+                        [str(i) for i in x]) if isinstance(x, list) else x)
+
+                DataTable.from_pandas(df)
+            else:
+                p(error)
+
     with open(args.metadata) as metadata:
         sample_details = sorted([
             {
@@ -30,7 +55,7 @@ def main(args):
         with report.add_section("Read summary", "Read summary"):
             fastcat.SeqSummary(args.stats)
 
-    with report.add_section("Metadata", "Metadata"):
+    with report.add_section("Sample Metadata", "Sample Metadata"):
         tabs = Tabs()
         for d in sample_details:
             with tabs.add_tab(d["sample"]):
@@ -58,6 +83,9 @@ def argparser():
     parser.add_argument(
         "--params", default=None, required=True,
         help="A JSON file containing the workflow parameter key/values")
+    parser.add_argument(
+        "--client_fields", default=None, required=False,
+        help="A JSON file containing useful key/values for display")
     parser.add_argument(
         "--revision", default='unknown',
         help="git branch/tag of the executed workflow")
