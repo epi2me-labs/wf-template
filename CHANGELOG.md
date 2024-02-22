@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - User provided sample sheet is now published in the output directory as `sample_sheet.csv`.
 - A check to make sure the sample sheet is a CSV file (and not e.g. `.xlsx`).
+- `--client_fields` parameter to allow input of a JSON file of key value pairs to display on output reports.
 
 ## [v4.3.0]
 ### Changed

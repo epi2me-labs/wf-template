@@ -166,6 +166,36 @@
 │   ├── reads03.fq
 │   └── reads04.fq.gz
 
+# Correctly formatted client fields JSON - report will display client fields
+├── case16
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   ├── client_fields.json
+│   └── sample_sheet.csv
+
+# Client fields JSON is malformed, report will display error
+├── case17
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   ├── client_fields.json
+│   └── sample_sheet.csv
+
 # more sample sheets for testing sample sheet validation
 ├── extra_sample_sheets
 │   ├── sample_sheet_1.csv          # correct

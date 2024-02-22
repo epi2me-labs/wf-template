@@ -39,6 +39,7 @@ process makeReport {
     input:
         val metadata
         tuple path(per_read_stats, stageAs: "stats/stats*.tsv.gz"), val(no_stats)
+        path client_fields
         path "versions/*"
         path "params.json"
     output:
@@ -47,11 +48,13 @@ process makeReport {
         String report_name = "wf-template-report.html"
         String metadata = new JsonBuilder(metadata).toPrettyString()
         String stats_args = no_stats ? "" : "--stats stats"
+        String client_fields_args = client_fields.name == OPTIONAL_FILE.name ? "" : "--client_fields $client_fields"
     """
     echo '${metadata}' > metadata.json
     workflow-glue report $report_name \
         --versions versions \
         $stats_args \
+        $client_fields_args \
         --params params.json \
         --metadata metadata.json
     """
@@ -113,9 +116,12 @@ workflow pipeline {
             it[2] ? file(it[2].resolve('*read*.tsv.gz')) : null
         }
         | ifEmpty(OPTIONAL_FILE)
+
+        client_fields = params.client_fields && file(params.client_fields).exists() ? file(params.client_fields) : OPTIONAL_FILE
         software_versions = getVersions()
         workflow_params = getParams()
         metadata = reads.map { it[0] }.toList()
+        
         report = makeReport(
             metadata,
             // having a list of files with the same name or an `OPTIONAL_FILE` is quite
@@ -125,6 +131,8 @@ workflow pipeline {
             per_read_stats.collect() | map { file_list ->
                 [file_list, file_list[0] == OPTIONAL_FILE]
             },
+            // if the client fields file doesn't exist then set a boolean as above.
+            client_fields,
             software_versions,
             workflow_params
         )

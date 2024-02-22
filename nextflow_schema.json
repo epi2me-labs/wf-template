@@ -40,6 +40,13 @@
                     "default": false,
                     "description": "Enable to continuously watch the input directory for new input files.",
                     "help_text": "This option enables the use of Nextflow\u2019s directory watching feature to constantly monitor input directories for new files."
+                },
+                "client_fields": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "A JSON file of key value pairs to display on the report.",
+                    "help_text": "This is used to populate a table of additional information (for example, about upstream components of an assay) to the workflow report.",
+                    "hidden": true
                 }
             },
             "oneOf": [
