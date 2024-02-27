@@ -31,7 +31,7 @@ def get_target_files(path, input_type):
     return list(filter(lambda file: is_target_file(file, input_type), path.iterdir()))
 
 
-def get_names_and_run_ids(path, input_type):
+def create_preliminary_meta(path, input_type):
     """Create a dict of sequence IDs / names and run_ids.
 
     `path` can be a single target file, a list of target files, or a directory
@@ -47,6 +47,8 @@ def get_names_and_run_ids(path, input_type):
         target_files = [path]
     else:
         raise ValueError("`path` needs to be a list or path to a file or directory.")
+    n_primary = 0
+    n_unmapped = 0
     for file in target_files:
         if input_type == "fastq":
             with pysam.FastxFile(file) as f:
@@ -59,13 +61,25 @@ def get_names_and_run_ids(path, input_type):
         else:
             with pysam.AlignmentFile(file, check_sq=False) as f:
                 for entry in f:
+                    # Just take unmapped reads and primary alignments
+                    if entry.is_unmapped:
+                        n_unmapped += 1
+                    else:
+                        if not (entry.is_secondary or entry.is_supplementary):
+                            n_primary += 1
                     name = entry.query_name
                     run_id = dict(entry.tags).get("RD")
                     names.append(name)
                     if run_id is not None:
                         run_ids.add(run_id)
-    return dict(names=names, run_ids=run_ids)
-
+    # add n_reads, n_primary or n_unmapped to the dict to be checked later
+    prel_meta = dict(names=names, run_ids=run_ids)
+    if input_type == "fastq":
+        prel_meta["n_seqs"] = len(names)
+    else:
+        prel_meta["n_primary"] = n_primary
+        prel_meta["n_unmapped"] = n_unmapped
+    return prel_meta
 
 def create_metadict(**kwargs):
     """Create dict of metadata and check if required values are present."""
@@ -118,14 +132,17 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
     input_path = Path(input_path)
     # find the valid inputs
     valid_inputs = []
+
     # handle file case first
     if input_path.is_file():
-        run_ids = get_names_and_run_ids(input_path, input_type)["run_ids"]
+        # get sequence names and run IDs
+        prel_meta = create_preliminary_meta(input_path, input_type)
+        del prel_meta['names']
         meta = create_metadict(
             alias=params["sample"]
             if params["sample"] is not None
             else input_path.name.split(".")[0],
-            run_ids=run_ids,
+            **prel_meta
         )
         valid_inputs.append([meta, input_path])
     else:
@@ -150,12 +167,13 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
             )
         if top_dir_target_files:
             # get the run IDs of all files
-            run_ids = get_names_and_run_ids(top_dir_target_files, input_type)["run_ids"]
+            prel_meta = create_preliminary_meta(top_dir_target_files, input_type)
+            del prel_meta['names']
             meta = create_metadict(
                 alias=params["sample"]
                 if params["sample"] is not None
                 else input_path.name,
-                run_ids=run_ids,
+                **prel_meta
             )
             valid_inputs.append([meta, input_path])
         else:
@@ -175,12 +193,13 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
                 if subdir.name == "unclassified" and not params["analyse_unclassified"]:
                     continue
                 # get the run IDs of all files
-                run_ids = get_names_and_run_ids(subdir, input_type)["run_ids"]
+                prel_meta = create_preliminary_meta(subdir, input_type)
+                del prel_meta['names']
                 barcode = subdir.name
                 meta = create_metadict(
                     alias=barcode,
                     barcode=barcode,
-                    run_ids=run_ids,
+                    **prel_meta
                 )
                 valid_inputs.append([meta, subdir])
             # parse the sample sheet in case there was one

@@ -117,7 +117,7 @@ def test_entry_names_and_run_ids(prepare):
             continue
         # get entries in the result file produced by the workflow
         res_seqs_fname = "seqs.fastq.gz" if input_type == "fastq" else "reads.bam"
-        entries = util.get_names_and_run_ids(
+        entries = util.create_preliminary_meta(
             ingress_results_dir / meta["alias"] / res_seqs_fname,
             input_type=input_type,
         )
@@ -136,7 +136,7 @@ def test_entry_names_and_run_ids(prepare):
                 and util.is_unaligned(file)
             ):
                 continue
-            curr_entries = util.get_names_and_run_ids(file, input_type=input_type)
+            curr_entries = util.create_preliminary_meta(file, input_type=input_type)
             exp_read_names += curr_entries["names"]
             exp_run_ids += curr_entries["run_ids"]
         assert set(entries["names"]) == set(exp_read_names)
@@ -191,12 +191,19 @@ def test_stats_present(prepare):
 
 def test_metamap(prepare):
     """Test if the metamap in the ingress results is as expected."""
-    ingress_results_dir, _, valid_inputs, _ = prepare
+    ingress_results_dir, input_type, valid_inputs, _ = prepare
     for meta, _ in valid_inputs:
         sample_results = ingress_results_dir / meta["alias"]
         # if there were no stats, we can't expect run IDs in the metamap
         if not list(sample_results.glob("*stats*/run_ids")):
             meta["run_ids"] = []
+            # if there are not stats, reset extra fields to defaults
+            # could not be stats where barcodes are in sample sheet but not in data.
+            if input_type == "fastq":
+                meta["n_seqs"] = None
+            if input_type == "bam":
+                meta["n_primary"] = None
+                meta["n_unmapped"] = None
         with open(sample_results / "metamap.json", "r") as f:
             metamap = json.load(f)
         assert meta == metamap
