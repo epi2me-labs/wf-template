@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - User provided sample sheet is now published in the output directory as `sample_sheet.csv`.
 - A check to make sure the sample sheet is a CSV file (and not e.g. `.xlsx`).
+- `n_seqs` field to the meta map for `fastq_ingress()`, containing the number of processed reads of the respective sample. 
+- `n_primary` and `n_unmapped` for `xam_ingress()`, containing the number of primary alignments and unmapped reads for the respective sample.
 ### Changed
 - Update bug template to new workflow execution possibilities.
 - `--client_fields` parameter to allow input of a JSON file of key value pairs to display on output reports.

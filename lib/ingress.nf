@@ -59,6 +59,53 @@ def add_run_IDs_to_meta(ch) {
 
 
 /**
+ * Take a channel of the shape `[meta, reads, path-to-stats-dir | null]` and do the
+ * following:
+ *  - For `fastcat`, extract the number of reads from the `n_seqs` file.
+ *  - For `bamstats`, extract the number of primary alignments and unmapped reads from
+ *    the `bamstats.flagstat.tsv` file.
+ * Then, add add these metrics to the meta map. If the path to the stats dir is `null`,
+ * set the values to 0 when adding them.
+ *
+ * @param ch: input channel of shape `[meta, reads, path-to-stats-dir | null]`
+ * @return: channel with a list of number of reads added to the metamap
+ */
+def add_number_of_reads_to_meta(ch, String input_type_format) {
+    // extract reads from fastcat stats / bamstats results and add to metadata
+    ch = ch | map { meta, reads, stats ->
+        // Check that stats directory is present.
+        if (stats) {
+            if (input_type_format == "fastq") {
+                // Stats from fastcat
+                Integer n_seqs = stats.resolve("n_seqs").splitText()[0] as Integer
+                // `meta + [...]` returns a new map which is handy to avoid any
+                // modifying-maps-in-closures weirdness
+                // See https://github.com/nextflow-io/nextflow/issues/2660
+                [meta + [n_seqs: n_seqs], reads, stats]
+            } else {
+                // or bamstats
+                ArrayList stats_csv = stats.resolve("bamstats.flagstat.tsv").splitCsv(header: true, sep:'\t')
+                // get primary alignments and unmapped and sum them
+                Integer n_primary = stats_csv["primary"].collect{it as Integer}.sum()
+                Integer n_unmapped = stats_csv["unmapped"].collect{it as Integer}.sum()
+                // `meta + [...]` returns a new map which is handy to avoid any
+                // modifying-maps-in-closures weirdness
+                // See https://github.com/nextflow-io/nextflow/issues/2660
+                [meta + [n_primary: n_primary, n_unmapped: n_unmapped], reads, stats]
+            }
+         } else {
+            // return defaults if stats is not there
+            if (input_type_format == "fastq") {
+                [meta + [n_seqs: null], reads, stats]
+            } else {
+                [meta + [n_primary: null, n_unmapped: null], reads, stats]
+            }
+        }
+    }
+    return ch
+}
+
+/**
  * Take a map of input arguments, find valid FASTQ inputs, and return a channel
  * with elements of `[metamap, seqs.fastq.gz | null, path-to-fastcat-stats | null]`.
  * The second item is `null` for sample sheet entries without a matching barcode
@@ -109,7 +156,9 @@ def fastq_ingress(Map arguments)
     // add sample sheet entries without barcode dirs to the results channel and extract
     // the run IDs into the metamaps before returning
     ch_result = ch_result.mix(input.missing.map { [*it, null] })
-    return add_run_IDs_to_meta(ch_result)
+    ch_result_run_IDs = add_run_IDs_to_meta(ch_result)
+    // add number of reads after potential filtering under the field n_seqs
+    return add_number_of_reads_to_meta(ch_result_run_IDs, "fastq")
 }
 
 
@@ -222,13 +271,15 @@ def xam_ingress(Map arguments)
             has_reads: path
             is_null: true
         }
-        ch_bamstats = bamstats(ch_result.has_reads)
-        ch_result = add_run_IDs_to_meta(ch_bamstats) | mix(ch_result.is_null)
+        ch_result = ch_result.is_null
+        | map { it + [null] }
+        | mix(bamstats(ch_result.has_reads))
+        ch_result = add_run_IDs_to_meta(ch_result)
     } else {
         // add `null` instead of path to `bamstats` results dir
         ch_result = ch_result | map { meta, bam -> [meta, bam, null] }
     }
-    return ch_result
+    return add_number_of_reads_to_meta(ch_result, "xam")
 }
 
 
@@ -475,7 +526,10 @@ process fastcat {
         mv histograms/* $fastcat_stats_outdir
         # extract the run IDs from the per-read stats
         csvtk cut -tf runid $fastcat_stats_outdir/per-read-stats.tsv.gz \
-        | csvtk del-header | sort | uniq > $fastcat_stats_outdir/run_ids
+        | csvtk del-header \
+        | tee >(wc -l > "$fastcat_stats_outdir/n_seqs") \
+        | sort \
+        | uniq > $fastcat_stats_outdir/run_ids
         """
 }
 
