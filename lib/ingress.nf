@@ -24,7 +24,8 @@ def is_target_file(Path file, List extensions) {
 
 
 /**
- * Take a channel of the shape `[meta, reads, path-to-stats-dir | null]` and extract the
+ * Take a channel of the shape `[meta, reads, path-to-stats-dir | null]` (or
+ * `[meta, [reads, index], path-to-stats-dir | null]` in the case of XAM) and extract the
  * run IDs from the `run_ids` file in the stats directory into the metamap. If the path
  * to the stats dir is `null`, add an empty list.
  *
@@ -202,11 +203,28 @@ def xam_ingress(Map arguments)
     ch_result = input.dirs
     | map { meta, path -> [meta, get_target_files_in_dir(path, xam_extensions)] }
     | mix(input.files)
+    | map{
+        // If there is more than one BAM in each folder we ignore
+        // the indices. For single BAM we add it as a string to the
+        // metadata for later use. If then the BAM returns as position
+        // sorted, the index will be used.
+        meta, paths -> 
+        boolean is_array = paths instanceof ArrayList
+        String xai_fn = null
+        if (!is_array){
+            boolean has_xai = file(paths + ".bai").exists()
+            if (has_xai){
+                xai_fn = paths + ".bai"
+            }
+        }
+        [meta + [xai_fn: xai_fn], paths]
+    }
     | checkBamHeaders
-    | map { meta, paths, is_unaligned_env, mixed_headers_env ->
+    | map { meta, paths, is_unaligned_env, mixed_headers_env, is_sorted_env ->
         // convert the env. variables from strings ('0' or '1') into bools
         boolean is_unaligned = is_unaligned_env as int as boolean
         boolean mixed_headers = mixed_headers_env as int as boolean
+        boolean is_sorted = is_sorted_env as int as boolean
         // throw an error if there was a sample with mixed headers
         if (mixed_headers) {
             error "Found mixed headers in (u)BAM files of sample '${meta.alias}'."
@@ -214,7 +232,7 @@ def xam_ingress(Map arguments)
         // add `is_unaligned` to the metamap (note the use of `+` to create a copy of
         // `meta` to avoid modifying every item in the channel;
         // https://github.com/nextflow-io/nextflow/issues/2660)
-        [meta + [is_unaligned: is_unaligned], paths]
+        [meta + [is_unaligned: is_unaligned, is_sorted: is_sorted], paths]
     }
     | branch { meta, paths ->
         // set `paths` to `null` for uBAM samples if unallowed (they will be added to
@@ -232,6 +250,9 @@ def xam_ingress(Map arguments)
         //   downstream
         //   - no files
         //   - a single unaligned file
+        //   - a single sorted and pre-indexed file
+        // * to_index:
+        //   - a single sorted, but not index, BAM file
         // * to_catsort: `samtools cat` into `samtools sort`
         //  - a single aligned file
         //  - more than one unaligned file
@@ -240,7 +261,10 @@ def xam_ingress(Map arguments)
         //    open file descriptors)
         // * to_merge: flatMap > sort > group > merge
         //  - between 1 and `N_OPEN_FILES_LIMIT` aligned files
-        no_op_needed: (n_files == 0) || (n_files == 1 && meta["is_unaligned"])
+        no_op_needed: \
+            (n_files == 0) || (n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && meta["xai_fn"])
+        to_index: 
+            (n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && !meta["xai_fn"]) 
         to_catsort: \
             (n_files == 1) || (n_files > N_OPEN_FILES_LIMIT) || meta["is_unaligned"]
         to_merge: true
@@ -257,9 +281,55 @@ def xam_ingress(Map arguments)
     ch_catsorted = ch_result.to_catsort
     | catSortBams
 
-    ch_result = input.missing
-    | mix(
-        ch_result.no_op_needed,
+    // Validate the index of the input BAM.
+    // If the input BAM index is invalid, regenerate it.
+    // First separate the BAM from the null input channels.
+    ch_to_validate = ch_result.no_op_needed
+    | map{
+        meta, paths ->
+        bai = paths && meta.xai_fn ? file(meta.xai_fn) : null
+        [meta, paths, bai]
+    }
+    | branch {
+        meta, paths, bai ->
+        to_validate: paths && bai
+        no_op_needed: true
+    }
+
+    // Validate non-null files with index
+    ch_validated = ch_to_validate.to_validate
+    | validateIndex
+    | branch {
+        meta, bam, bai, has_valid_index_env -> 
+        boolean has_valid_index = has_valid_index_env as int as boolean
+        // Split if it is a valid index
+        valid_idx: has_valid_index
+            return [meta, bam, bai]
+        invalid_idx: true
+            return [meta, bam]
+    }
+
+    // Create channel for no_op needed (null channels and valid indexes)
+    ch_no_op = ch_validated.valid_idx
+    | mix(ch_to_validate.no_op_needed)
+
+    // Re-index sorted-not-indexed BAM file
+    ch_indexed = ch_result.to_index
+    | mix( ch_validated.invalid_idx )
+    | samtools_index
+
+    // Add extra null for the missing index to input.missing
+    // as well as the missing metadata.
+    ch_missing = input.missing
+    | map{
+        meta, paths ->
+        [meta + [xai_fn: null, is_sorted: false], paths, null]
+    }
+
+    // Combine all possible inputs
+    ch_result = ch_missing | mix(
+        ch_no_op,
+        ch_indexed,
         ch_merged,
         ch_catsorted,
     )
@@ -267,19 +337,60 @@ def xam_ingress(Map arguments)
     // run `bamstats` if requested
     if (margs["stats"]) {
         // branch and run `bamstats` only on the non-`null` paths
-        ch_result = ch_result.branch { meta, path ->
+        ch_result = ch_result.branch { meta, path, index ->
             has_reads: path
             is_null: true
         }
-        ch_result = ch_result.is_null
-        | map { it + [null] }
-        | mix(bamstats(ch_result.has_reads))
-        ch_result = add_run_IDs_to_meta(ch_result)
+        ch_bamstats = bamstats(ch_result.has_reads)
+
+        // the channel comes from xam_ingress also have the BAM index in it.
+        // Handle this by placing them in a nested array, maintaining the structure 
+        // from fastq_ingress. We do not use variable name as assigning variable
+        // name with a tuple not matching (e.g. meta, bam, bai, stats <- [meta, bam, stats] )
+        // causes the workflow to crash.
+        ch_result = ch_bamstats
+        | map{
+            it[3] ? [it[0], [it[1], it[2]], it[3]] : it
+        }
+        | add_run_IDs_to_meta
+        | map{
+            it.flatten()
+        }
+        | mix(
+            ch_result.is_null.map{it + [null]}
+        )
     } else {
         // add `null` instead of path to `bamstats` results dir
-        ch_result = ch_result | map { meta, bam -> [meta, bam, null] }
+        ch_result = ch_result | map { meta, bam, bai -> [meta, bam, bai, null] }
     }
-    return add_number_of_reads_to_meta(ch_result, "xam")
+
+    // Remove metadata that are unnecessary downstream:
+    // meta.xai_fn: not needed, as it will be part of the channel as a file
+    // meta.is_sorted: if data are aligned, they will also be sorted/indexed
+    //
+    // The output meta can contain the following flags:
+    // [
+    //     barcode: always present
+    //     type: always present
+    //     run_id: always present, but can be empty (i.e. `[]`)
+    //     alias: always present
+    //     n_primary: always present, but can be `null`
+    //     n_unmapped: always present, but can be `null`
+    //     is_unaligned: present if there is a (u)BAM file
+    // ]
+    ch_result = add_number_of_reads_to_meta(
+        ch_result
+            | map{
+                meta, bam, bai, stats ->
+                [meta.findAll { it.key !in ['xai_fn', 'is_sorted'] }, [bam, bai], stats]
+            }, 
+        "xam"
+    )
+    | map{
+        it.flatten()
+    }
+
+    return ch_result
 }
 
 
@@ -297,10 +408,34 @@ process checkBamHeaders {
             path("input_dir/reads*.bam", includeInputs: true),
             env(IS_UNALIGNED),
             env(MIXED_HEADERS),
+            env(IS_SORTED),
         )
     script:
     """
     workflow-glue check_bam_headers_in_dir input_dir > env.vars
+    source env.vars
+    """
+}
+
+
+process validateIndex {
+    label "ingress"
+    label "wf_common"
+    cpus 1
+    memory "2 GB"
+    input: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
+    output:
+        // set the two env variables by `eval`-ing the output of the python script
+        // checking the XAM headers
+        tuple(
+            val(meta),
+            path("reads.bam", includeInputs: true),
+            path("reads.bam.bai", includeInputs: true),
+            env(HAS_VALID_INDEX)
+        )
+    script:
+    """
+    workflow-glue check_xam_index reads.bam > env.vars
     source env.vars
     """
 }
@@ -311,12 +446,13 @@ process mergeBams {
     label "wf_common"
     cpus 3
     memory "4 GB"
-    input: tuple val(meta), path("input_bams/reads*.bam")
-    output: tuple val(meta), path("reads.bam")
-    shell:
+    input: tuple val(meta), path("input_bams/reads*.bam"), path("input_bams/reads*.bam.bai")
+    output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
+    script:
+    def sort_threads = Math.max(1, task.cpus - 1)
     """
-    samtools merge -@ ${task.cpus - 1} \
-        -b <(find input_bams -name 'reads*.bam') -o reads.bam
+    samtools merge -@ ${sort_threads} \
+        -b <(find input_bams -name 'reads*.bam') --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
 
@@ -327,11 +463,12 @@ process catSortBams {
     cpus 4
     memory "4 GB"
     input: tuple val(meta), path("input_bams/reads*.bam")
-    output: tuple val(meta), path("reads.bam")
+    output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     script:
+    def sort_threads = Math.max(1, task.cpus - 2)
     """
     samtools cat -b <(find input_bams -name 'reads*.bam') \
-    | samtools sort - -@ ${task.cpus - 2} -o reads.bam
+    | samtools sort - -@ ${sort_threads} --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
 
@@ -342,10 +479,11 @@ process sortBam {
     cpus 3
     memory "4 GB"
     input: tuple val(meta), path("reads.bam")
-    output: tuple val(meta), path("reads.sorted.bam")
+    output: tuple val(meta), path("reads.sorted.bam"), path("reads.sorted.bam.bai")
     script:
+    def sort_threads = Math.max(1, task.cpus - 1)
     """
-    samtools sort -@ ${task.cpus - 1} reads.bam -o reads.sorted.bam
+    samtools sort --write-index -@ ${sort_threads} reads.bam -o reads.sorted.bam##idx##reads.sorted.bam.bai
     """
 }
 
@@ -356,10 +494,11 @@ process bamstats {
     cpus 3
     memory "4 GB"
     input:
-        tuple val(meta), path("reads.bam")
+        tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     output:
         tuple val(meta),
               path("reads.bam"),
+              path("reads.bam.bai"),
               path("bamstats_results")
     script:
         def bamstats_threads = Math.max(1, task.cpus - 1)
@@ -376,8 +515,6 @@ process bamstats {
     | csvtk del-header | sort | uniq > bamstats_results/run_ids
     """
 }
-
-
 /**
  * Run `watchPath` on the input directory and return a channel of shape [metamap,
  * path-to-target-file]. The meta data is taken from the sample sheet in case one was
@@ -818,5 +955,19 @@ process validate_sample_sheet {
     String req_types_arg = required_sample_types ? "--required_sample_types "+required_sample_types.join(" ") : ""
     """
     workflow-glue check_sample_sheet sample_sheet.csv $req_types_arg
+    """
+}
+
+// Generate an index for an input XAM file
+process samtools_index {
+    cpus 4
+    memory 4.GB
+    input:
+        tuple val(meta), path("reads.bam")
+    output:
+        tuple val(meta), path("reads.bam"), path("reads.bam.bai")
+    script:
+    """
+    samtools index -@ $task.cpus reads.bam
     """
 }

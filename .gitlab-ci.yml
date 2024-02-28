@@ -63,6 +63,13 @@ docker-run:
                 "xam-case03-barcode02",  # test_data/xam_ingress/case03/barcode02 contains only uBAM
                 "xam-case03-barcode02-keep_unaligned",
                 "xam-case04",
+                "xam-case05",
+                "xam-case06",
+                "xam-case07",
+                "xam-case08",
+                "xam-case08-skip",
+                "xam-case09",
+                "xam-case10",
                 ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -318,3 +325,38 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case04"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'case04'."
+
+        - if: $MATRIX_NAME == "xam-case05"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case05/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case05 bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case06"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case06/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case06/ bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case07"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case07/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case07/ bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case08"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case08/reads.ubam --wf.keep_unaligned"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case08/reads.ubam bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case08-skip"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case08/reads.ubam --wf.keep_unaligned false"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case08/reads.ubam bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case09"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case09/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case09/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case10"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case10/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case10/reads.bam bam $$PWD/$$CI_PROJECT_NAME

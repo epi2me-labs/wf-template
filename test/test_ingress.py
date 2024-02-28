@@ -232,6 +232,25 @@ def test_reads_sorted(prepare):
             )
 
 
+def test_reads_index(prepare):
+    """If input type is BAM, check that the BAI index exists."""
+    ingress_results_dir, input_type, valid_inputs, params = prepare
+    if input_type == "fastq":
+        return
+    for meta, path in valid_inputs:
+        if path is None:
+            # this sample sheet entry had no input dir (or no reads)
+            continue
+        # Create BAI file path
+        bai_file = (
+            ingress_results_dir
+            / meta["alias"]
+            / 'reads.bam.bai'
+        )
+        if not bai_file.is_file():
+            raise ValueError(f"Missing index: {bai_file.as_posix()}.")
+
+
 if __name__ == "__main__":
     # trigger pytest
     ret_code = pytest.main([Path(__file__).resolve(), "-vv"])
