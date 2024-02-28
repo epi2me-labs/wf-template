@@ -44,3 +44,46 @@
 ├── case04
 │   ├── reads0.bam
 │   └── reads1.bam
+
+# One input BAM is sorted and indexed, whereas the other is not.
+# The workflow should recognize this, acknowledge where input XAM is sorted thanks to
+# the HD tag, and recreate the index file where needed.
+# This avoids sorting and indexing files that do not need it, saving space with large BAM
+# inputs (e.g. human-size genomes).
+└── case05
+    ├── barcode01
+    │   ├── reads.bam
+    │   └── reads.bam.bai
+    └── barcode02
+        └── reads.bam
+
+# A single sorted and indexed input BAM.
+# The workflow should acknowledge that there is a sorted XAM thanks to
+# the presence of the index, and should therefore skip its generation.
+# This avoids sorting and indexing files that do not need it, saving
+# space with large BAM inputs (e.g. human-size genomes).
+└── case06
+    ├── reads.bam
+    └── reads.bam.bai
+
+# A single unsorted BAM.
+# The workflow should sort and index this.
+└── case07
+    └── reads.bam
+
+# A single uBAM.
+# The workflow should index this.
+└── case08
+    └── reads.bam
+
+# A single sorted, but not indexed, BAM.
+# The workflow should index this.
+└── case09
+    └── reads.bam
+
+# A single sorted BAM file, but with a wrong
+# index. The workflow should spot this and
+# regenerate it.
+└── case10
+    ├── reads.bam
+    └── reads.bam.bai

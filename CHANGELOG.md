@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A check to make sure the sample sheet is a CSV file (and not e.g. `.xlsx`).
 - `n_seqs` field to the meta map for `fastq_ingress()`, containing the number of processed reads of the respective sample. 
 - `n_primary` and `n_unmapped` for `xam_ingress()`, containing the number of primary alignments and unmapped reads for the respective sample.
+- Support for indexing of input BAM files within `xam_ingress()`.
+
 ### Changed
 - Update bug template to new workflow execution possibilities.
 - `--client_fields` parameter to allow input of a JSON file of key value pairs to display on output reports.
+- Pre-indexed, single BAM files are not sorted within `xam_ingress()`.
 
 
 ## [v4.3.0]

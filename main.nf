@@ -90,6 +90,7 @@ process collectIngressResultsInDir {
         // to avoid name collisions
         tuple val(meta),
             path(reads, stageAs: "reads/*"),
+            path(index, stageAs: "index/*"),
             path(stats, stageAs: "stats/*")
     output:
         // use sub-dir to avoid name clashes (in the unlikely event of a sample alias
@@ -99,11 +100,12 @@ process collectIngressResultsInDir {
     String outdir = "out/${meta["alias"]}"
     String metaJson = new JsonBuilder(meta).toPrettyString()
     String reads = reads.fileName.name == OPTIONAL_FILE.name ? "" : reads
+    String index = index.fileName.name == OPTIONAL_FILE.name ? "" : index
     String stats = stats.fileName.name == OPTIONAL_FILE.name ? "" : stats
     """
     mkdir -p $outdir
     echo '$metaJson' > metamap.json
-    mv metamap.json $reads $stats $outdir
+    mv metamap.json $reads $stats $index $outdir
     """
 }
 
@@ -112,8 +114,20 @@ workflow pipeline {
     take:
         reads
     main:
-        per_read_stats = reads.flatMap {
-            it[2] ? file(it[2].resolve('*read*.tsv.gz')) : null
+        // fastq_ingress doesn't have the index; add one extra null for compatibility.
+        // We do not use variable name as assigning variable name with a tuple
+        // not matching (e.g. meta, bam, bai, stats <- [meta, bam, stats]) causes
+        // the workflow to crash.
+        reads = reads
+        .map{
+            it.size() == 4 ? it : [it[0], it[1], null, it[2]]
+        }
+
+        // Resolve and extract stats files.
+        per_read_stats = reads
+        .flatMap {
+            meta, path, index, stats ->
+            stats ? file(stats.resolve('*read*.tsv.gz')) : null
         }
         | ifEmpty(OPTIONAL_FILE)
 
@@ -138,7 +152,10 @@ workflow pipeline {
         )
         reads
         // replace `null` with path to optional file
-        | map { [ it[0], it[1] ?: OPTIONAL_FILE, it[2] ?: OPTIONAL_FILE ] }
+        | map { 
+            meta, path, index, stats ->
+            [ meta, path ?: OPTIONAL_FILE, index ?: OPTIONAL_FILE, stats ?: OPTIONAL_FILE ]
+        }
         | collectIngressResultsInDir
     emit:
         ingress_results = collectIngressResultsInDir.out
