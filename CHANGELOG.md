@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Added
+- Argument `return_fastq` to `xam_ingress()` to convert the input BAM data to FASTQ format.
 - User provided sample sheet is now published in the output directory as `sample_sheet.csv`.
 - A check to make sure the sample sheet is a CSV file (and not e.g. `.xlsx`).
 - `n_seqs` field to the meta map for `fastq_ingress()`, containing the number of processed reads of the respective sample. 

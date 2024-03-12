@@ -16,7 +16,7 @@ def validate_xam_index(xam_file):
     """
     alignments = pysam.AlignmentFile(xam_file, check_sq=False)
     try:
-        has_valid_index = alignments.fetch()
+        alignments.fetch()
         has_valid_index = True
     except ValueError:
         has_valid_index = False
@@ -29,8 +29,7 @@ def main(args):
 
     # Check if a XAM has a valid index
     has_valid_index = validate_xam_index(args.input_xam)
-    # write `is_unaligned` and `mixed_headers` out so that they can be set as env.
-    # variables
+    # write `has_valid_index` out so that they can be set as env.
     sys.stdout.write(
         f"HAS_VALID_INDEX={int(has_valid_index)}"
     )

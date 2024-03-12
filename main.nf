@@ -199,6 +199,7 @@ workflow {
             "keep_unaligned": params.wf.keep_unaligned,
             "stats": params.wf.bamstats,
             "watch_path": params.wf.watch_path,
+            "return_fastq": params.wf.return_fastq,
         ])
     }
 

@@ -57,9 +57,11 @@ docker-run:
                 "xam-case01",
                 "xam-case02",
                 "xam-case02-no-bamstats",
+                "xam-case02-return_fastq",
                 "xam-case03",
                 "xam-case03-sample_sheet",
                 "xam-case03-keep_unaligned-sample_sheet",
+                "xam-case03-keep_unaligned-sample_sheet-return_fastq",
                 "xam-case03-barcode02",  # test_data/xam_ingress/case03/barcode02 contains only uBAM
                 "xam-case03-barcode02-keep_unaligned",
                 "xam-case04",
@@ -288,6 +290,10 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case02 --wf.bamstats false"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case02 bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case02-return_fastq"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case02 --wf.return_fastq"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case02 bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case03"
           variables:
@@ -308,6 +314,12 @@ docker-run:
         - if: $MATRIX_NAME == "xam-case03-keep_unaligned-sample_sheet"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --wf.keep_unaligned"
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
+                && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
+        - if: $MATRIX_NAME == "xam-case03-keep_unaligned-sample_sheet-return_fastq"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --wf.keep_unaligned --wf.return_fastq"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
                 && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log

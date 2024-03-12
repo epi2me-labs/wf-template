@@ -125,13 +125,6 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | sample | string | A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files. |  |  |
 
 
-### Output Options
-
-| Nextflow parameter name  | Type | Description | Help | Default |
-|--------------------------|------|-------------|------|---------|
-| out_dir | string | Directory for output of all workflow results. |  | output |
-
-
 ### Miscellaneous Options
 
 | Nextflow parameter name  | Type | Description | Help | Default |
