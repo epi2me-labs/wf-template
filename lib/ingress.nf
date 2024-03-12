@@ -168,7 +168,8 @@ def fastq_ingress(Map arguments)
  * with elements of `[metamap, reads.bam | null, path-to-bamstats-results | null]`.
  * The second item is `null` for sample sheet entries without a matching barcode
  * directory or samples containing only uBAM files when `keep_unaligned` is `false`.
- * The last item is `null` if `bamstats` was not run (it is only run when `stats: true`).
+ * The last item is `null` if `bamstats` was not run (it is only run when `stats:
+ * true`).
  *
  * @param arguments: map with arguments containing
  *  - "input": path to either: (i) input (u)BAM file, (ii) top-level directory
@@ -179,6 +180,9 @@ def fastq_ingress(Map arguments)
  *  - "analyse_unclassified": boolean whether to keep unclassified reads
  *  - "stats": boolean whether to run `bamstats`
  *  - "keep_unaligned": boolean whether to include uBAM files
+ *  - "return_fastq": boolean whether to convert to FASTQ (this will always run
+ *    `fastcat`)
+ *  - "fastcat_extra_args": string with extra arguments to pass to `fastcat`
  *  - "required_sample_types": list of required sample types in the sample sheet
  *  - "watch_path": boolean whether to use `watchPath` and run in streaming mode
  * @return: channel of `[Map(alias, barcode, type, ...), Path|null, Path|null]`.
@@ -192,7 +196,11 @@ def fastq_ingress(Map arguments)
 def xam_ingress(Map arguments)
 {
     // check arguments
-    Map margs = parse_arguments("xam_ingress", arguments, ["keep_unaligned": false])
+    Map margs = parse_arguments(
+        "xam_ingress",
+        arguments,
+        ["keep_unaligned": false, "return_fastq": false, "fastcat_extra_args": ""]
+    )
 
     // we only accept BAM or uBAM for now (i.e. no SAM or CRAM)
     ArrayList xam_extensions = [".bam", ".ubam"]
@@ -210,7 +218,7 @@ def xam_ingress(Map arguments)
         // sorted, the index will be used.
         meta, paths -> 
         boolean is_array = paths instanceof ArrayList
-        String xai_fn = null
+        String xai_fn
         if (!is_array){
             boolean has_xai = file(paths + ".bai").exists()
             if (has_xai){
@@ -243,16 +251,12 @@ def xam_ingress(Map arguments)
         }
         // get the number of files (`paths` can be a list, a single path, or `null`)
         int n_files = paths instanceof List ? paths.size() : (paths ? 1 : 0)
-        // Preparations finished; we can do the branching now. There will be 3 branches
+        // Preparations finished; we can do the branching now. There will be 5 branches
         // depending on the number of files per sample and whether the reads are already
         // aligned:
-        // * no_op_needed: no need to do anything; just add to the final results channel
-        //   downstream
-        //   - no files
-        //   - a single unaligned file
-        //   - a single sorted and pre-indexed file
-        // * to_index:
-        //   - a single sorted, but not index, BAM file
+        // * no files: no need to do anything
+        // * indexed: a single sorted and indexed BAM file. Index will be validated.
+        // * to_index: a single sorted, but not indexed, BAM file
         // * to_catsort: `samtools cat` into `samtools sort`
         //  - a single aligned file
         //  - more than one unaligned file
@@ -261,13 +265,34 @@ def xam_ingress(Map arguments)
         //    open file descriptors)
         // * to_merge: flatMap > sort > group > merge
         //  - between 1 and `N_OPEN_FILES_LIMIT` aligned files
-        no_op_needed: \
-            (n_files == 0) || (n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && meta["xai_fn"])
+        no_files: n_files == 0
+        indexed: \
+            n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && meta["xai_fn"]
         to_index: 
-            (n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && !meta["xai_fn"]) 
+            n_files == 1 && (meta["is_unaligned"] || meta["is_sorted"]) && !meta["xai_fn"]
         to_catsort: \
             (n_files == 1) || (n_files > N_OPEN_FILES_LIMIT) || meta["is_unaligned"]
         to_merge: true
+    }
+
+    if (margs["return_fastq"]) {
+        // only run samtools fastq on samples with at least one file
+        ch_to_fastq = ch_result.indexed.mix(
+            ch_result.to_index,
+            ch_result.to_merge,
+            ch_result.to_catsort
+        )
+    
+        // input.missing: sample sheet entries without barcode dirs
+        ch_result = input.missing
+        | mix(ch_result.no_files)
+        | map { [*it, null] }
+        | mix(bamToFastq(ch_to_fastq, margs["fastcat_extra_args"]))
+        | map{
+            meta, path, stats ->
+            [meta.findAll { it.key !in ['xai_fn', 'is_sorted'] }, path, stats]
+        }
+        return add_number_of_reads_to_meta(add_run_IDs_to_meta(ch_result), "fastq")
     }
 
     // deal with samples with few-enough files for `samtools merge` first
@@ -284,7 +309,7 @@ def xam_ingress(Map arguments)
     // Validate the index of the input BAM.
     // If the input BAM index is invalid, regenerate it.
     // First separate the BAM from the null input channels.
-    ch_to_validate = ch_result.no_op_needed
+    ch_to_validate = ch_result.indexed
     | map{
         meta, paths ->
         bai = paths && meta.xai_fn ? file(meta.xai_fn) : null
@@ -320,7 +345,11 @@ def xam_ingress(Map arguments)
 
     // Add extra null for the missing index to input.missing
     // as well as the missing metadata.
+    // input.missing: sample sheet entries without barcode dirs
     ch_missing = input.missing
+    | mix(
+        ch_result.no_files,
+    )
     | map{
         meta, paths ->
         [meta + [xai_fn: null, is_sorted: false], paths, null]
@@ -393,6 +422,41 @@ def xam_ingress(Map arguments)
     return ch_result
 }
 
+process bamToFastq {
+    label "ingress"
+    label "wf_common"
+    cpus 4
+    memory "2 GB"
+    input:
+        tuple val(meta), path(bams, stageAs: "input_dir/reads*.bam")
+        val extra_args
+    output: tuple val(meta), path("seqs.fastq.gz"), path("fastcat_stats")
+    script:
+    """
+    mkdir fastcat_stats
+
+    # Save file as compressed fastq
+    fastcat \
+        -s ${meta["alias"]} \
+        -r >(bgzip -c > fastcat_stats/per-read-stats.tsv.gz) \
+        -f fastcat_stats/per-file-stats.tsv \
+        --histograms histograms \
+        $extra_args \
+        <( 
+            samtools cat -b <(find input_dir -name 'reads*.bam') | \
+            samtools fastq - -n -T '*' -o - -0 - 
+        ) \
+    | bgzip -c > seqs.fastq.gz
+
+    mv histograms/* fastcat_stats
+
+    # extract the run IDs and number of sequences (n_seqs) from the per-read stats
+    csvtk freq -tf runid fastcat_stats/per-read-stats.tsv.gz \
+    | csvtk del-header \
+    | tee >(cut -f 1 | sort > "fastcat_stats/run_ids") \
+    | awk 'BEGIN{n=0}; {n+=\$2}; END{print n}' > "fastcat_stats/n_seqs"
+    """
+}
 
 process checkBamHeaders {
     label "ingress"
@@ -449,9 +513,9 @@ process mergeBams {
     input: tuple val(meta), path("input_bams/reads*.bam"), path("input_bams/reads*.bam.bai")
     output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     script:
-    def sort_threads = Math.max(1, task.cpus - 1)
+    def merge_threads = Math.max(1, task.cpus - 1)
     """
-    samtools merge -@ ${sort_threads} \
+    samtools merge -@ ${merge_threads} \
         -b <(find input_bams -name 'reads*.bam') --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
@@ -661,12 +725,11 @@ process fastcat {
             | bgzip > $out
 
         mv histograms/* $fastcat_stats_outdir
-        # extract the run IDs from the per-read stats
-        csvtk cut -tf runid $fastcat_stats_outdir/per-read-stats.tsv.gz \
+        # extract the run IDs and number of sequences (n_seqs) from the per-read stats
+        csvtk freq -tf runid $fastcat_stats_outdir/per-read-stats.tsv.gz \
         | csvtk del-header \
-        | tee >(wc -l > "$fastcat_stats_outdir/n_seqs") \
-        | sort \
-        | uniq > $fastcat_stats_outdir/run_ids
+        | tee >(cut -f 1 | sort > "$fastcat_stats_outdir/run_ids") \
+        | awk 'BEGIN{n=0}; {n+=\$2}; END{print n}' > "$fastcat_stats_outdir/n_seqs"
         """
 }
 
