@@ -16,10 +16,10 @@
 | sample | string | A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files. |  |  |
 
 
-### Miscellaneous Options
+### Output Options
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| disable_ping | boolean | Enable to prevent sending a workflow ping. |  | False |
+| out_dir | string | Directory for output of all workflow results. |  | output |
 
 
