@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.0.1]
+### Added
+- `container` directive for processes with `wftemplate` label.
+- Missing label directives for `samtools_index` process.
+
+### Changed
+- Bumped wf-common to shaa0c37a1cad3357e2b5c6fa8b9ebc25ee9ee88879.
+
 ## [v5.0.0]
 ### Added
 - Argument `return_fastq` to `xam_ingress()` to convert the input BAM data to FASTQ format.
