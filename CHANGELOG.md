@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.0.3]
+### Fixed
+- Refusing to parse valid sample sheet CSV files in certain cases.
+
 ## [v5.0.2]
 ### Changed
 - Bumped wf-common to sha362c808b4f22ce66f940bef192a1316aec5f4c75.

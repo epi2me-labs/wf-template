@@ -28,7 +28,8 @@ ERROR_MESSAGES = [
     ("utf8_bom.csv", "", ""),  # check this does not fail
     # check other input formats
     ("sample_sheet_1.csv.zip", "The sample sheet doesn't seem to be a CSV file.", ""),
-    ("sample_sheet_1.xlsx", "The sample sheet doesn't seem to be a CSV file.", "")
+    ("sample_sheet_1.xlsx", "The sample sheet doesn't seem to be a CSV file.", ""),
+    ("sample_sheet_10.csv", "", ""),  # check this does not fail
 ]
 
 
