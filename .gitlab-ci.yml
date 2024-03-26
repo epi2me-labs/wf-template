@@ -53,25 +53,25 @@ docker-run:
                 "case16-nonexisting-client-fields",
                 "case17",
                 "mutateParams",
-                "xam-single-file",
-                "xam-case01",
-                "xam-case02",
+                "xam-single-file", "xam-single-file-s3",
+                "xam-case01", "xam-case01-s3",
+                "xam-case02", "xam-case02-s3",
                 "xam-case02-no-bamstats",
                 "xam-case02-return_fastq",
-                "xam-case03",
+                "xam-case03", "xam-case03-s3",
                 "xam-case03-sample_sheet",
                 "xam-case03-keep_unaligned-sample_sheet",
                 "xam-case03-keep_unaligned-sample_sheet-return_fastq",
                 "xam-case03-barcode02",  # test_data/xam_ingress/case03/barcode02 contains only uBAM
                 "xam-case03-barcode02-keep_unaligned",
-                "xam-case04",
-                "xam-case05",
-                "xam-case06",
-                "xam-case07",
-                "xam-case08",
+                "xam-case04", "xam-case04-s3",
+                "xam-case05", "xam-case05-s3",
+                "xam-case06", "xam-case06-s3",
+                "xam-case07", "xam-case07-s3",
+                "xam-case08", "xam-case08-s3",
                 "xam-case08-skip",
-                "xam-case09",
-                "xam-case10",
+                "xam-case09", "xam-case09-s3",
+                "xam-case10", "xam-case10-s3"
                 ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -275,10 +275,19 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/reads.bam"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-single-file-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/reads.bam bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case01"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case01"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'case01'."
+        - if: $MATRIX_NAME == "xam-case01-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case01"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'case01'."
 
@@ -286,6 +295,10 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case02"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case02 bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case02-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case02"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case02 bam $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "xam-case02-no-bamstats"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case02 --wf.bamstats false"
@@ -298,6 +311,11 @@ docker-run:
         - if: $MATRIX_NAME == "xam-case03"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'barcode03'."
+        - if: $MATRIX_NAME == "xam-case03-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case03"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'barcode03'."
         - if: $MATRIX_NAME == "xam-case03-keep_unaligned"
@@ -337,26 +355,48 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case04"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'case04'."
+        - if: $MATRIX_NAME == "xam-case04-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case04"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Found mixed headers in (u)BAM files of sample 'case04'."
 
         - if: $MATRIX_NAME == "xam-case05"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case05/"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case05 bam $$PWD/$$CI_PROJECT_NAME
 
+        - if: $MATRIX_NAME == "xam-case05-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case05/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case05 bam $$PWD/$$CI_PROJECT_NAME
+
         - if: $MATRIX_NAME == "xam-case06"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case06/"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case06/ bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case06-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case06/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case06/ bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case07"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case07/"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case07/ bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case07-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case07/"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case07/ bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case08"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case08/reads.ubam --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case08/reads.ubam bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case08-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case08/reads.ubam --wf.keep_unaligned"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case08/reads.ubam bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case08-skip"
           variables:
@@ -367,8 +407,16 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case09/reads.bam"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case09/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case09-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case09/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case09/reads.bam bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case10"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case10/reads.bam"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case10/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case10-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case10/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case10/reads.bam bam $$PWD/$$CI_PROJECT_NAME
