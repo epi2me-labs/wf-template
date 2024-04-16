@@ -512,9 +512,9 @@ process fastcat {
         $extra_args \
         $input_src \
     | if [ "$fastq_chunk" = "0" ]; then
-        bgzip > fastq_chunks/seqs.fastq.gz
+        bgzip -@ $task.cpus > fastq_chunks/seqs.fastq.gz
       else
-        split -l $lines_per_chunk -d --additional-suffix=.fastq.gz --filter='bgzip > \$FILE' - fastq_chunks/seqs_;
+        split -l $lines_per_chunk -d --additional-suffix=.fastq.gz --filter='bgzip -@ $task.cpus > \$FILE' - fastq_chunks/seqs_;
       fi
 
     mv histograms/* fastcat_stats

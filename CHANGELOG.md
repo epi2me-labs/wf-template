@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - Functionality to allow chunking of fastq outputs from ingress.
-
+### Changed
+- Use 4 threads for bgzip compressions during fastcat process.
 ## [v5.0.4]
 ### Fixed
 - `xam_ingress` failing to stage S3 BAM indexes.
