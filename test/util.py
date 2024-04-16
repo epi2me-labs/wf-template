@@ -31,7 +31,7 @@ def get_target_files(path, input_type):
     return list(filter(lambda file: is_target_file(file, input_type), path.iterdir()))
 
 
-def create_preliminary_meta(path, input_type, bam_headers_in_fastq=False):
+def create_preliminary_meta(path, input_type, chunk_size, bam_headers_in_fastq):
     """Create a dict of sequence IDs / names and run_ids.
 
     :param path: can be a single target file, a list of target files, or a directory
@@ -94,7 +94,17 @@ def create_preliminary_meta(path, input_type, bam_headers_in_fastq=False):
     else:
         prel_meta["n_primary"] = n_primary
         prel_meta["n_unmapped"] = n_unmapped
+
     return prel_meta
+
+
+def add_output_n_fastq(meta, output_type, chunk_size):
+    if output_type == "fastq":
+        meta["n_fastq"] = 1
+        if chunk_size is not None:
+            meta["n_fastq"] = meta["n_seqs"] // chunk_size + int(meta["n_seqs"] % chunk_size > 0)
+        meta["group_key"] = {"groupSize": meta["n_fastq"], "groupTarget": meta["alias"]}
+    return meta
 
 
 def create_metadict(**kwargs):
@@ -141,7 +151,7 @@ def is_unaligned(path):
     return not first_sq_lines
 
 
-def get_valid_inputs(input_path, input_type, sample_sheet, params):
+def get_valid_inputs(input_path, input_type, sample_sheet, chunk_size, params):
     """Get valid input paths and corresponding metadata."""
     # get functions for FASTQ or BAM case
     check_input_type(input_type)
@@ -153,9 +163,8 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
     if input_path.is_file():
         # get sequence names and run IDs
         prel_meta = create_preliminary_meta(
-            input_path,
-            input_type,
-            bam_headers_in_fastq=params["wf"]["return_fastq"]
+            input_path, input_type,
+            chunk_size, params["wf"]["return_fastq"]
         )
         del prel_meta['names']
         meta = create_metadict(
@@ -188,9 +197,8 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
         if top_dir_target_files:
             # get the run IDs of all files
             prel_meta = create_preliminary_meta(
-                top_dir_target_files, 
-                input_type,
-                bam_headers_in_fastq=params["wf"]["return_fastq"]
+                top_dir_target_files, input_type,
+                chunk_size, params["wf"]["return_fastq"]
             )
 
             del prel_meta['names']
@@ -219,9 +227,8 @@ def get_valid_inputs(input_path, input_type, sample_sheet, params):
                     continue
                 # get the run IDs of all files        
                 prel_meta = create_preliminary_meta(
-                    subdir,
-                    input_type,
-                    bam_headers_in_fastq=params["wf"]["return_fastq"]
+                    subdir, input_type,
+                    chunk_size, params["wf"]["return_fastq"]
                 )
                 del prel_meta['names']
                 barcode = subdir.name

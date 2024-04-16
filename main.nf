@@ -150,8 +150,9 @@ workflow pipeline {
             software_versions,
             workflow_params
         )
-        reads
+        
         // replace `null` with path to optional file
+        reads
         | map { 
             meta, path, index, stats ->
             [ meta, path ?: OPTIONAL_FILE, index ?: OPTIONAL_FILE, stats ?: OPTIONAL_FILE ]
@@ -187,7 +188,20 @@ workflow {
             "fastcat_extra_args": "",
             "required_sample_types": [],
             "watch_path": params.wf.watch_path,
+            "fastq_chunk": params.fastq_chunk,
         ])
+        // group back the possible multiple fastqs from the chunking. In
+        // a "real" workflow this wouldn't be done immediately here and
+        // we'd do something more interesting first. Note that groupTuple
+        // will give us a file list of `[null]` for missing samples, reduce
+        // this back to `null`.
+        samples = samples
+            .map {meta, fname, stats ->
+                [meta["group_key"], meta, fname, stats]}
+            .groupTuple()
+            .map { key, metas, fnames, statss ->
+                if (fnames[0] == null) {fnames = null}
+                [metas[0], fnames, statss[0]]}
     } else {
         // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
         // by the schema)
@@ -200,6 +214,7 @@ workflow {
             "stats": params.wf.bamstats,
             "watch_path": params.wf.watch_path,
             "return_fastq": params.wf.return_fastq,
+            "fastq_chunk": params.fastq_chunk,
         ])
     }
 

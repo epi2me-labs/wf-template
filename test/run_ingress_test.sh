@@ -12,20 +12,25 @@ get-test_data-from-aws () {
         test_data_from_S3
 }
 
-input_path=$1
-input_type=$2
-wf_output_dir=$3
-sample_sheet=$4
+sample_sheet=""
+chunks=""
 
-# `input_path`, `ipnut_type`, and `wf_output_dir` are required
-if ! [[ $# -eq 3 || $# -eq 4 ]]; then
-    echo "Provide 2 or 3 arguments!" >&2
-    exit 1
-fi
+while getopts 's:c:' option; do
+  case "$option" in
+    s ) sample_sheet=$OPTARG;;
+    c ) chunks="--chunk $OPTARG";;
+  esac
+done
+input_path=${@:$OPTIND:1}
+input_type=${@:$OPTIND+1:1}
+wf_output_dir=${@:$OPTIND+2:1}
 
-# `input_type` needs to be either "fastq" or "bam"
-if [[ $input_type != "fastq" && $input_type != "bam" ]]; then
-    echo "The second argument must be 'fastq' or 'bam'!"
+valid=true
+if [ -z $input_path ]; then valid=false; fi
+if [ -z $input_type ]; then valid=false; fi
+if [ -z $wf_output_dir ]; then valid=false; fi
+if ! $valid; then
+    echo "run_ingress_test.sh [-s sample_sheet] [-c chunksize] input input_type output"
     exit 1
 fi
 
@@ -56,4 +61,4 @@ img_hash=$(grep 'common_sha.\?=' nextflow.config | grep -oE '(mr[0-9]+_)?sha[0-9
 # run test
 docker run -u $(id -u) -v "$PWD":"$PWD" \
     ontresearch/wf-common:"$img_hash" \
-    python "$PWD/test/test_ingress.py" "${input_path[@]}" $input_type $wf_output_dir $sample_sheet
+    python "$PWD/test/test_ingress.py" "${input_path[@]}" $input_type $wf_output_dir $sample_sheet $chunks

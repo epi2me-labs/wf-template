@@ -48,6 +48,12 @@ def args():
             "path from workflow params (if available)."
         ),
     )
+    parser.add_argument(
+        "--chunk", type=int,
+        help=(
+            "Chunk size for output fastq."
+        )
+    )
     args = parser.parse_args()
 
     input_type = args.type
@@ -81,16 +87,16 @@ def args():
     if not input_path.exists():
         raise ValueError(f"Input path '{input_path}' does not exist.")
 
-    return input_path, input_type, output_type, sample_sheet, ingress_results_dir, params
+    return input_path, input_type, output_type, sample_sheet, ingress_results_dir, args.chunk, params
 
 
 # prepare data for the tests
 @pytest.fixture(scope="module")
 def prepare():
     """Prepare data for tests."""
-    input_path, input_type, output_type, sample_sheet, ingress_results_dir, params = args()
-    valid_inputs = util.get_valid_inputs(input_path, input_type, sample_sheet, params)
-    return ingress_results_dir, input_type, output_type, valid_inputs, params
+    input_path, input_type, output_type, sample_sheet, ingress_results_dir, chunk_size, params = args()
+    valid_inputs = util.get_valid_inputs(input_path, input_type, sample_sheet, chunk_size, params)
+    return ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params
 
 
 # define tests
@@ -101,7 +107,7 @@ def test_result_subdirs(prepare):
     Tests if the published sub-directories in `ingress_results_dir` contain all
     the samples we expect.
     """
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     files = [x for x in ingress_results_dir.iterdir() if x.is_file()]
     subdirs = [x.name for x in ingress_results_dir.iterdir() if x.is_dir()]
     assert not files, "Files found in top-level dir of ingress results"
@@ -109,13 +115,12 @@ def test_result_subdirs(prepare):
 
 
 def test_entry_names_and_run_ids(prepare):
-    """
-    Test sequence names and run IDs.
+    """Test sequence names and run IDs.
 
     Tests if the concatenated sequences indeed contain all the read IDs of the target
     files in the valid inputs.
     """
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     # unless when run with `--bam ... --wf.return_fastq` the output type (i.e. the type
     # of the files returned by ingress) is the same as the input type
     for meta, path in valid_inputs:
@@ -123,12 +128,20 @@ def test_entry_names_and_run_ids(prepare):
             # this sample sheet entry had no input dir (or no reads)
             continue
         # get entries in the result file produced by the workflow
-        res_seqs_fname = "seqs.fastq.gz" if output_type == "fastq" else "reads.bam"
+        if chunk_size is not None:
+            res_seqs_fname = ""
+        elif output_type == "fastq":
+            res_seqs_fname = "seqs.fastq.gz"
+        elif output_type == "bam":
+            res_seqs_fname = "reads.bam"
+        else:
+            raise ValueError(f"Unknown output_type: {output_type}.")
+
         entries = util.create_preliminary_meta(
             ingress_results_dir / meta["alias"] / res_seqs_fname,
-            input_type=output_type,
-            bam_headers_in_fastq=params["wf"]["return_fastq"],
-        )
+            output_type, chunk_size,
+            params["wf"]["return_fastq"])
+
         # now collect the entries from the individual input files
         exp_read_names = []
         exp_run_ids = []
@@ -145,8 +158,7 @@ def test_entry_names_and_run_ids(prepare):
             ):
                 continue
             curr_entries = util.create_preliminary_meta(
-                file, input_type=input_type, bam_headers_in_fastq=False
-            )
+                file, input_type, chunk_size, False)
             exp_read_names += curr_entries["names"]
             exp_run_ids += curr_entries["run_ids"]
         assert set(entries["names"]) == set(exp_read_names)
@@ -155,7 +167,7 @@ def test_entry_names_and_run_ids(prepare):
 
 def test_stats_present(prepare):
     """Tests if the `fastcat` stats are present when they should be."""
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     for meta, path in valid_inputs:
         if path is None:
             # this sample sheet entry had no input dir (or no reads)
@@ -201,9 +213,13 @@ def test_stats_present(prepare):
 
 def test_metamap(prepare):
     """Test if the metamap in the ingress results is as expected."""
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     for meta, _ in valid_inputs:
+        # prepare() uses a function to parse both inputs and outputs,
+        # add in some output specific things
+        meta = util.add_output_n_fastq(meta, output_type, chunk_size)
         sample_results = ingress_results_dir / meta["alias"]
+
         # if there were no stats, we can't expect run IDs in the metamap
         if not list(sample_results.glob("*stats*/run_ids")):
             meta["run_ids"] = []
@@ -214,6 +230,8 @@ def test_metamap(prepare):
             elif output_type == "bam":
                 meta["n_primary"] = None
                 meta["n_unmapped"] = None
+
+        # read what nextflow had
         with open(sample_results / "metamap.json", "r") as f:
             metamap = json.load(f)
         assert meta == metamap
@@ -221,7 +239,7 @@ def test_metamap(prepare):
 
 def test_reads_sorted(prepare):
     """If input type is BAM, test if the emitted files were sorted."""
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     if input_type == "fastq":
         return
     for meta, _ in valid_inputs:
@@ -244,7 +262,7 @@ def test_reads_sorted(prepare):
 
 def test_reads_index(prepare):
     """If input type is BAM, check that the BAI index exists."""
-    ingress_results_dir, input_type, output_type, valid_inputs, params = prepare
+    ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     if output_type == "fastq":
         return
     for meta, path in valid_inputs:
@@ -263,5 +281,5 @@ def test_reads_index(prepare):
 
 if __name__ == "__main__":
     # trigger pytest
-    ret_code = pytest.main([Path(__file__).resolve(), "-vv"])
+    ret_code = pytest.main([Path(__file__).resolve(), "-vv", "-s"])
     sys.exit(ret_code)
