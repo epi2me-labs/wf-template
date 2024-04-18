@@ -38,16 +38,17 @@ process makeReport {
     label "wftemplate"
     input:
         val metadata
-        tuple path(per_read_stats, stageAs: "stats/stats*.tsv.gz"), val(no_stats)
+        tuple path(per_read_stats, stageAs: "stats*.txt.gz"), val(no_stats)
         path client_fields
         path "versions/*"
         path "params.json"
+        val wf_version
     output:
         path "wf-template-*.html"
     script:
         String report_name = "wf-template-report.html"
         String metadata = new JsonBuilder(metadata).toPrettyString()
-        String stats_args = no_stats ? "" : "--stats stats"
+        String stats_args = no_stats ? "" : "--stats $per_read_stats"
         String client_fields_args = client_fields.name == OPTIONAL_FILE.name ? "" : "--client_fields $client_fields"
     """
     echo '${metadata}' > metadata.json
@@ -56,7 +57,8 @@ process makeReport {
         $stats_args \
         $client_fields_args \
         --params params.json \
-        --metadata metadata.json
+        --metadata metadata.json \
+        --wf_version $wf_version
     """
 }
 
@@ -123,32 +125,26 @@ workflow pipeline {
             it.size() == 4 ? it : [it[0], it[1], null, it[2]]
         }
 
-        // Resolve and extract stats files.
-        per_read_stats = reads
-        .flatMap {
-            meta, path, index, stats ->
-            stats ? file(stats.resolve('*read*.tsv.gz')) : null
-        }
-        | ifEmpty(OPTIONAL_FILE)
-
         client_fields = params.client_fields && file(params.client_fields).exists() ? file(params.client_fields) : OPTIONAL_FILE
         software_versions = getVersions()
         workflow_params = getParams()
-        metadata = reads.map { it[0] }.toList()
-        
+
+        // get metadata and stats files, keeping them ordered (could do with transpose I suppose)
+        reads.multiMap{ meta, path, index, stats ->
+            meta: meta
+            stats: stats ? file(stats.resolve('*read*.tsv.gz')) : OPTIONAL_FILE
+        }.set { for_report }
+        metadata = for_report.meta.collect()
+        // create a file list of the stats, and signal if its empty or not
+        stats = for_report.stats | ifEmpty(OPTIONAL_FILE) | collect | map { [it, it[0] == OPTIONAL_FILE] } 
+ 
         report = makeReport(
             metadata,
-            // having a list of files with the same name or an `OPTIONAL_FILE` is quite
-            // annoying as we need to avoid naming collisions but this will also
-            // overwrite the name of the `OPTIONAL_FILE`. We therefore add an extra
-            // boolean designating whether there were stats or not.
-            per_read_stats.collect() | map { file_list ->
-                [file_list, file_list[0] == OPTIONAL_FILE]
-            },
-            // if the client fields file doesn't exist then set a boolean as above.
+            stats,
             client_fields,
             software_versions,
-            workflow_params
+            workflow_params,
+            workflow.manifest.version
         )
         
         // replace `null` with path to optional file

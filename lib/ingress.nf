@@ -153,14 +153,16 @@ def fastq_ingress(Map arguments)
     } else {
         // run `fastcat` only on directories and rename / compress single files
         ch_dir = fastcat(input.dirs, margs["fastcat_extra_args"], margs["fastq_chunk"], "FASTQ")
+            .map { meta, path, stats -> [meta, path] }
         def ch_file
         if (margs["fastq_chunk"] > 0) {
             ch_file = split_fq_file(input.files, margs["fastq_chunk"])
         } else {
             ch_file = move_or_compress_fq_file(input.files)
         }
-        ch_result = ch_dir.mix(
-            ch_file.map { meta, path -> [meta, path, null] })
+        ch_result = ch_dir 
+            | mix(ch_file) 
+            | map { meta, path -> [meta, path, null] }
     }
     // The above may have returned a channel with multiple fastqs if chunking
     // is enabled. Flatten this and add a groupKey to meta information which
@@ -508,6 +510,7 @@ process fastcat {
         -s ${meta["alias"]} \
         -r >(bgzip -c > fastcat_stats/per-read-stats.tsv.gz) \
         -f fastcat_stats/per-file-stats.tsv \
+        -i fastcat_stats/per-file-runids.txt \
         --histograms histograms \
         $extra_args \
         $input_src \
@@ -518,13 +521,14 @@ process fastcat {
       fi
 
     mv histograms/* fastcat_stats
-    
-    # extract the run IDs and number of sequences (n_seqs) from the per-read stats
-    csvtk freq -tf runid fastcat_stats/per-read-stats.tsv.gz \
-    | csvtk del-header \
-    | tee >(cut -f 1 | sort > "fastcat_stats/run_ids") \
-    | awk 'BEGIN{n=0}; {n+=\$2}; END{print n}' > "fastcat_stats/n_seqs"
-    """
+
+    # get n_seqs from per-file stats - need to sum them up
+    awk 'NR==1{for (i=1; i<=NF; i++) {ix[\$i] = i}} NR>1 {c+=\$ix["n_seqs"]} END{print c}' \
+        fastcat_stats/per-file-stats.tsv > fastcat_stats/n_seqs
+    # get unique run IDs
+    awk 'NR==1{for (i=1; i<=NF; i++) {ix[\$i] = i}} NR>1 {print \$ix["run_id"]}' \
+        fastcat_stats/per-file-runids.txt | sort | uniq > fastcat_stats/run_ids
+    """    
 }
 
 process checkBamHeaders {

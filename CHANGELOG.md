@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Functionality to allow chunking of fastq outputs from ingress.
 ### Changed
 - Use 4 threads for bgzip compressions during fastcat process.
+- Updated fastcat to v0.17.0 for faster decompression and on-the-fly run ID summary.
+- Updated to use ezCharts v0.8.0 for report generation.
+### Fixed
+- Ingress code would return stats even when not requested.
+
 ## [v5.0.4]
 ### Fixed
 - `xam_ingress` failing to stage S3 BAM indexes.
@@ -16,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v5.0.3]
 ### Changed
 - Bumped wf-common to sha645176f98b8780851f9c476a064d44c2ae76ddf6.
-
 ### Fixed
 - Refusing to parse valid sample sheet CSV files in certain cases.
 
@@ -28,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `container` directive for processes with `wftemplate` label.
 - Missing label directives for `samtools_index` process.
-
 ### Changed
 - Bumped wf-common to shaa0c37a1cad3357e2b5c6fa8b9ebc25ee9ee88879.
 
@@ -40,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `n_seqs` field to the meta map for `fastq_ingress()`, containing the number of processed reads of the respective sample. 
 - `n_primary` and `n_unmapped` for `xam_ingress()`, containing the number of primary alignments and unmapped reads for the respective sample.
 - Support for indexing of input BAM files within `xam_ingress()`.
-
 ### Changed
 - Update bug template to new workflow execution possibilities.
 - `--client_fields` parameter to allow input of a JSON file of key value pairs to display on output reports.
@@ -52,11 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped minimum required Nextflow version to 23.04.2.
 - Renamed `lib/fastqingress.nf` to `lib/ingress.nf` to reflect its expanded functionality.
 - The documentation has been updated.
-
 ### Added
 - `xam_ingress` function for processing (u)BAM data.
 - Git issue bug form requires user to report if the demo data was successful.
-
 ### Removed
 - Default local executor CPU and RAM limits.
 
@@ -70,7 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `fastqingress` processes additionally labelled with `fastq_ingress`
 - Use literal names to stage process inputs wherever possible and wrap filenames in quotes otherwise.
 - Any sample aliases that contain spaces will be replaced with underscores.
-
 ### Removed
 - `wf-template` container is no longer used
 - `params.process_label` is no longer required
@@ -79,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Optional `required_sample_types` field added to fastqingress. The sample sheet must contain at least one of each sample type provided to be deemed valid.
 - Configuration for running demo data in AWS
-
 ### Changed
 - Updated GitHub issue templates to force capture of more information.
 - Removed glibc hack from post-test script
@@ -87,7 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enum choices are enumerated in the `--help` output
 - Enum choices are enumerated as part of the error message when a user has selected an invalid choice
 - Bumped minimum required Nextflow version to 22.10.8
-
 ### Fixed
 - Replaced `--threads` option in fastqingress with hardcoded values to remove warning about undefined `param.threads`
 
@@ -100,7 +97,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented `--version`
 - `fastcat_extra_args` option to `fastq_ingress` to pass arbitrary arguments to `fastcat` (defaults to empty string).
 - `fastcat_stats` option to `fastq_ingress` to force generation of `fastcat` stats even when the input is only a single file (default is false).
-
 ### Changed
 - Use `bgzip` for compression instead of `pigz`.
 - pre-commit now uses `flake8` v5.0.4.
@@ -112,12 +108,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed sanitize fastq option.
 - fastq_ingress now removes unclassified read folders by default.
 - Workflow name and version is now more prominently displayed on start
-
 ### Fixed
 - Output argument in Fastqingress homogenised.
 - Sanitize fastq intermittent null object error.
 - Add `*.pyc` and `*.pyo` ignores to wf-template .gitignore
-
 ### Note
 - Bumped version to `v4` to align versioning with Launcher v4
 
@@ -125,14 +119,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - default process label parameter
 - Added `params.wf.example_cmd` list to populate `--help`
-
 ### Changed
 - Update WorkflowMain.groovy to provide better `--help`
 
 ## [v0.1.0]
 ### Changed
 - `sample_name` to `sample_id` throughout to mathc MinKNOW samplesheet.
-
 ### Added
 - Singularity profile include in base config.
 - Numerous other changes that have been lost to the mists of time.
@@ -141,11 +133,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Fastqingress module for common handling of (possibly multiplexed) inputs.
 - Optimized container size through removal of various conda cruft.
-
 ### Changed
 - Use mamba by default for building conda environments.
 - Cut down README to items specific to workflow.
-
 ### Fixed
 - Incorrect specification of conda environment file in Nextflow config.
 

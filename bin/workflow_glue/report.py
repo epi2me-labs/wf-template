@@ -16,7 +16,7 @@ def main(args):
     logger = get_named_logger("Report")
     report = labs.LabsReport(
         "Workflow Template Sequencing report", "wf-template",
-        args.params, args.versions)
+        args.params, args.versions, args.wf_version)
 
     client_fields = None
     if args.client_fields:
@@ -43,17 +43,20 @@ def main(args):
                 p(error)
 
     with open(args.metadata) as metadata:
-        sample_details = sorted([
-            {
-                'sample': d['alias'],
-                'type': d['type'],
-                'barcode': d['barcode']
-            } for d in json.load(metadata)
-        ], key=lambda d: d["sample"])
+        sample_details = [{
+            'sample': d['alias'],
+            'type': d['type'],
+            'barcode': d['barcode']
+        } for d in json.load(metadata)]
 
     if args.stats:
         with report.add_section("Read summary", "Read summary"):
-            fastcat.SeqSummary(args.stats)
+            names = tuple(d['sample'] for d in sample_details)
+            stats = tuple(args.stats)
+            if len(stats) == 1:
+                stats = stats[0]
+                names = names[0]
+            fastcat.SeqSummary(stats, sample_names=names)
 
     with report.add_section("Sample Metadata", "Sample Metadata"):
         tabs = Tabs()
@@ -72,10 +75,10 @@ def argparser():
     parser = wf_parser("report")
     parser.add_argument("report", help="Report output file")
     parser.add_argument(
-        "--stats", help="Fastcat per-read stats (file or dir with files)."
-    )
+        "--stats", nargs='+',
+        help="Fastcat per-read stats, ordered as per entries in --metadata.")
     parser.add_argument(
-        "--metadata", default='metadata.json',
+        "--metadata", default='metadata.json', required=True,
         help="sample metadata")
     parser.add_argument(
         "--versions", required=True,
@@ -87,9 +90,6 @@ def argparser():
         "--client_fields", default=None, required=False,
         help="A JSON file containing useful key/values for display")
     parser.add_argument(
-        "--revision", default='unknown',
-        help="git branch/tag of the executed workflow")
-    parser.add_argument(
-        "--commit", default='unknown',
-        help="git commit of the executed workflow")
+        "--wf_version", default='unknown',
+        help="version of the executed workflow")
     return parser
