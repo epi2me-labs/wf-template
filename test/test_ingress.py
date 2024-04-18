@@ -1,4 +1,3 @@
-"""Test `fastq_ingress` or `xam_ingess` result of previously run workflow."""
 import argparse
 from itertools import chain
 import json
@@ -173,12 +172,7 @@ def test_stats_present(prepare):
             # this sample sheet entry had no input dir (or no reads)
             continue
         if output_type == "fastq":
-            # we expect `fastcat` stats in two cases: (i) they were requested explicitly
-            # or (ii) the input was a directory containing multiple FASTQ files
-            expect_stats = params["wf"]["fastcat_stats"] or (
-                path.is_dir()
-                and len(util.get_target_files(path, input_type="fastq")) > 1
-            )
+            expect_stats = params["wf"]["fastcat_stats"]
             stats_dir_name = "fastcat_stats"
             stats_file_names = [
                 "per-file-stats.tsv",
