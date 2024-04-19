@@ -176,17 +176,17 @@ def test_stats_present(prepare):
             stats_dir_name = "fastcat_stats"
             stats_file_names = [
                 "per-file-stats.tsv",
-                "per-read-stats.tsv.gz",
                 "run_ids",
                 "length.hist",
                 "quality.hist"
             ]
+            if params["wf"]["per_read_stats"]:
+                stats_file_names.append("per-read-stats.tsv.gz")
         else:
             # `bamstats` we only expect when they were requested
             expect_stats = params["wf"]["bamstats"]
             stats_dir_name = "bamstats_results"
             stats_file_names = [
-                "bamstats.readstats.tsv.gz",
                 "bamstats.flagstat.tsv",
                 "run_ids",
                 "accuracy.hist",
@@ -194,6 +194,8 @@ def test_stats_present(prepare):
                 "length.hist",
                 "quality.hist"
             ]
+            if params["wf"]["per_read_stats"]:
+                stats_file_names.append("bamstats.readstats.tsv.gz")
         stats_dir = ingress_results_dir / meta["alias"] / stats_dir_name
         # assert that stats are there when we expect them
         assert expect_stats == stats_dir.exists()

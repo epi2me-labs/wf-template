@@ -38,7 +38,7 @@ process makeReport {
     label "wftemplate"
     input:
         val metadata
-        tuple path(per_read_stats, stageAs: "stats*.txt.gz"), val(no_stats)
+        tuple path(stats, stageAs: "stats_*"), val(no_stats)
         path client_fields
         path "versions/*"
         path "params.json"
@@ -48,7 +48,7 @@ process makeReport {
     script:
         String report_name = "wf-template-report.html"
         String metadata = new JsonBuilder(metadata).toPrettyString()
-        String stats_args = no_stats ? "" : "--stats $per_read_stats"
+        String stats_args = no_stats ? "" : "--stats $stats"
         String client_fields_args = client_fields.name == OPTIONAL_FILE.name ? "" : "--client_fields $client_fields"
     """
     echo '${metadata}' > metadata.json
@@ -132,7 +132,7 @@ workflow pipeline {
         // get metadata and stats files, keeping them ordered (could do with transpose I suppose)
         reads.multiMap{ meta, path, index, stats ->
             meta: meta
-            stats: stats ? file(stats.resolve('*read*.tsv.gz')) : OPTIONAL_FILE
+            stats: stats ?: OPTIONAL_FILE
         }.set { for_report }
         metadata = for_report.meta.collect()
         // create a file list of the stats, and signal if its empty or not
@@ -185,6 +185,7 @@ workflow {
             "required_sample_types": [],
             "watch_path": params.wf.watch_path,
             "fastq_chunk": params.fastq_chunk,
+            "per_read_stats": params.wf.per_read_stats,
         ])
         // group back the possible multiple fastqs from the chunking. In
         // a "real" workflow this wouldn't be done immediately here and
@@ -211,6 +212,7 @@ workflow {
             "watch_path": params.wf.watch_path,
             "return_fastq": params.wf.return_fastq,
             "fastq_chunk": params.fastq_chunk,
+            "per_read_stats": params.wf.per_read_stats
         ])
     }
 
