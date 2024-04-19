@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use 4 threads for bgzip compressions during fastcat process.
 - Updated fastcat to v0.17.0 for faster decompression and on-the-fly run ID summary.
 - Updated to use ezCharts v0.8.0 for report generation.
+- Remove per-read stats from fastcat output by default.
 ### Fixed
 - Ingress code would return stats even when not requested.
 

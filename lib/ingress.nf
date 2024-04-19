@@ -137,7 +137,12 @@ def fastq_ingress(Map arguments)
     // check arguments
     Map margs = parse_arguments(
         "fastq_ingress", arguments,
-        ["fastcat_extra_args": "", "fastq_chunk": null])
+        [
+            "fastcat_extra_args": "",
+            "fastq_chunk": null,
+            "per_read_stats": false
+        ]
+    )
     margs["fastq_chunk"] ?= 0  // cant pass null through channel
 
     ArrayList fq_extensions = [".fastq", ".fastq.gz", ".fq", ".fq.gz"]
@@ -148,11 +153,10 @@ def fastq_ingress(Map arguments)
     def ch_result
     if (margs.stats) {
         // run fastcat regardless of input type
-        ch_result = fastcat(
-            input.files.mix(input.dirs), margs["fastcat_extra_args"], margs["fastq_chunk"], "FASTQ")
+        ch_result = fastcat(input.files.mix(input.dirs), margs, "FASTQ")
     } else {
         // run `fastcat` only on directories and rename / compress single files
-        ch_dir = fastcat(input.dirs, margs["fastcat_extra_args"], margs["fastq_chunk"], "FASTQ")
+        ch_dir = fastcat(input.dirs, margs, "FASTQ")
             .map { meta, path, stats -> [meta, path] }
         def ch_file
         if (margs["fastq_chunk"] > 0) {
@@ -164,6 +168,8 @@ def fastq_ingress(Map arguments)
             | mix(ch_file) 
             | map { meta, path -> [meta, path, null] }
     }
+    // TODO: xam_ingress mixes in a .no_files channel here. Do we need to do the same? 
+
     // The above may have returned a channel with multiple fastqs if chunking
     // is enabled. Flatten this and add a groupKey to meta information which
     // states the number of sibling files. This can be later used as the key
@@ -235,8 +241,11 @@ def xam_ingress(Map arguments)
     Map margs = parse_arguments(
         "xam_ingress", arguments,
         [
-            "keep_unaligned": false, "return_fastq": false,
-            "fastcat_extra_args": "", "fastq_chunk": null
+            "keep_unaligned": false,
+            "return_fastq": false,
+            "fastcat_extra_args": "",
+            "fastq_chunk": null,
+            "per_read_stats": false
         ]
     )
     margs["fastq_chunk"] ?= 0  // cant pass null through channel
@@ -327,14 +336,14 @@ def xam_ingress(Map arguments)
     
         // input.missing: sample sheet entries without barcode dirs
         ch_result = input.missing
-        | mix(ch_result.no_files)  // TODO: we don't have this in fastq_ingress?
+        | mix(ch_result.no_files)
         | map { meta, files ->
             meta["group_key"] = groupKey(meta["alias"], 1)
             meta["n_fastq"] = 1
             [meta, files, null]
         }
         | mix(
-            fastcat(ch_to_fastq, margs["fastcat_extra_args"], margs["fastq_chunk"], "BAM")
+            fastcat(ch_to_fastq, margs, "BAM")
             | map { meta, files, stats -> 
                 // new `arity: '1..*'` would be nice here
                 files = files instanceof List ? files : [files]
@@ -426,7 +435,7 @@ def xam_ingress(Map arguments)
             has_reads: path
             is_null: true
         }
-        ch_bamstats = bamstats(ch_result.has_reads)
+        ch_bamstats = bamstats(ch_result.has_reads, margs)
 
         // the channel comes from xam_ingress also have the BAM index in it.
         // Handle this by placing them in a nested array, maintaining the structure 
@@ -486,21 +495,21 @@ process fastcat {
     memory "2 GB"
     input:
         tuple val(meta), path(input_src, stageAs: "input_src")
-        val extra_args
-        val fastq_chunk
+        val fcargs
         val src
     output:
         tuple val(meta),
               path("fastq_chunks/*.fastq.gz"),  // TODO: change this to use new arity: '1..*'
               path("fastcat_stats")
     script:
-        Integer lines_per_chunk = fastq_chunk != 0 ? fastq_chunk * 4 : null
+        Integer lines_per_chunk = fcargs["fastq_chunk"] != 0 ? fcargs["fastq_chunk"] * 4 : null
         def input_src = src == "FASTQ"
             ? "input_src"
             : """<( 
                 samtools cat -b <(find . -name 'input_src*') | \
                 samtools fastq - -n -T '*' -o - -0 - 
               )"""
+        def stats_args = fcargs["per_read_stats"] ? "-r >(bgzip -c > fastcat_stats/per-read-stats.tsv.gz)" : ""
     """
     mkdir fastcat_stats
     mkdir fastq_chunks
@@ -508,13 +517,13 @@ process fastcat {
     # Save file as compressed fastq
     fastcat \
         -s ${meta["alias"]} \
-        -r >(bgzip -c > fastcat_stats/per-read-stats.tsv.gz) \
         -f fastcat_stats/per-file-stats.tsv \
         -i fastcat_stats/per-file-runids.txt \
         --histograms histograms \
-        $extra_args \
+        $stats_args \
+        ${fcargs["fastcat_extra_args"]} \
         $input_src \
-    | if [ "$fastq_chunk" = "0" ]; then
+    | if [ "${fcargs["fastq_chunk"]}" = "0" ]; then
         bgzip -@ $task.cpus > fastq_chunks/seqs.fastq.gz
       else
         split -l $lines_per_chunk -d --additional-suffix=.fastq.gz --filter='bgzip -@ $task.cpus > \$FILE' - fastq_chunks/seqs_;
@@ -632,6 +641,7 @@ process bamstats {
     memory "4 GB"
     input:
         tuple val(meta), path("reads.bam"), path("reads.bam.bai")
+        val bsargs
     output:
         tuple val(meta),
               path("reads.bam"),
@@ -639,17 +649,22 @@ process bamstats {
               path("bamstats_results")
     script:
         def bamstats_threads = Math.max(1, task.cpus - 1)
+        def per_read_stats_arg = bsargs["per_read_stats"] ? "| bgzip > bamstats_results/bamstats.readstats.tsv.gz" : " > /dev/null"
     """
     mkdir bamstats_results
     bamstats reads.bam -s $meta.alias -u \
         -f bamstats_results/bamstats.flagstat.tsv -t $bamstats_threads \
+        -i bamstats_results/bamstats.runids.txt \
         --histograms histograms \
-    | bgzip > bamstats_results/bamstats.readstats.tsv.gz
+    $per_read_stats_arg
     mv histograms/* bamstats_results/
 
-    # extract the run IDs from the per-read stats
-    csvtk cut -tf runid bamstats_results/bamstats.readstats.tsv.gz \
-    | csvtk del-header | sort | uniq > bamstats_results/run_ids
+    # get n_seqs from flagstats - need to sum them up
+    awk 'NR==1{for (i=1; i<=NF; i++) {ix[\$i] = i}} NR>1 {c+=\$ix["total"]} END{print c}' \
+        bamstats_results/bamstats.flagstat.tsv > bamstats_results/n_seqs
+    # get unique run IDs
+    awk 'NR==1{for (i=1; i<=NF; i++) {ix[\$i] = i}} NR>1 {print \$ix["run_id"]}' \
+        bamstats_results/bamstats.runids.txt | sort | uniq > bamstats_results/run_ids
     """
 }
 /**
@@ -811,7 +826,8 @@ Map parse_arguments(String func_name, Map arguments, Map extra_kwargs=[:]) {
         "analyse_unclassified": false,
         "stats": true,
         "required_sample_types": [],
-        "watch_path": false
+        "watch_path": false,
+        "per_read_stats": false
     ]
     ArgumentParser parser = new ArgumentParser(
         args: required_args,
