@@ -213,23 +213,13 @@ def test_metamap(prepare):
     for meta, _ in valid_inputs:
         # prepare() uses a function to parse both inputs and outputs,
         # add in some output specific things
-        meta = util.add_output_n_fastq(meta, output_type, chunk_size)
-        sample_results = ingress_results_dir / meta["alias"]
-
-        # if there were no stats, we can't expect run IDs in the metamap
-        if not list(sample_results.glob("*stats*/run_ids")):
-            meta["run_ids"] = []
-            # if there are not stats, reset extra fields to defaults
-            # could not be stats where barcodes are in sample sheet but not in data.
-            if output_type == "fastq":
-                meta["n_seqs"] = None
-            elif output_type == "bam":
-                meta["n_primary"] = None
-                meta["n_unmapped"] = None
+        meta = util.amend_meta_for_output(meta, output_type, chunk_size, ingress_results_dir)
 
         # read what nextflow had
-        with open(sample_results / "metamap.json", "r") as f:
+        with open(ingress_results_dir / meta["alias"] / "metamap.json", "r") as f:
             metamap = json.load(f)
+
+        # validate
         assert meta == metamap
 
 

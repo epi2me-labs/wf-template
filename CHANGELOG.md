@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Added
-- Functionality to allow chunking of fastq outputs from ingress.
+- Functionality to allow chunking of fastq outputs from ingress. Additional keys in meta information are added to reflect this.
 ### Changed
 - Use 4 threads for bgzip compressions during fastcat process.
 - Updated fastcat to v0.17.0 for faster decompression and on-the-fly run ID summary.

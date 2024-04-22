@@ -174,6 +174,7 @@ workflow {
         CWUtil.mutateParam(params, "fastq", params.mutate_fastq)
     }
 
+    def samples
     if (params.fastq) {
         samples = fastq_ingress([
             "input":params.fastq,
@@ -187,18 +188,6 @@ workflow {
             "fastq_chunk": params.fastq_chunk,
             "per_read_stats": params.wf.per_read_stats,
         ])
-        // group back the possible multiple fastqs from the chunking. In
-        // a "real" workflow this wouldn't be done immediately here and
-        // we'd do something more interesting first. Note that groupTuple
-        // will give us a file list of `[null]` for missing samples, reduce
-        // this back to `null`.
-        samples = samples
-            .map {meta, fname, stats ->
-                [meta["group_key"], meta, fname, stats]}
-            .groupTuple()
-            .map { key, metas, fnames, statss ->
-                if (fnames[0] == null) {fnames = null}
-                [metas[0], fnames, statss[0]]}
     } else {
         // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
         // by the schema)
@@ -216,14 +205,35 @@ workflow {
         ])
     }
 
-    pipeline(samples)
+    // group back the possible multiple fastqs from the chunking. In
+    // a "real" workflow this wouldn't be done immediately here and
+    // we'd do something more interesting first. Note that groupTuple
+    // will give us a file list of `[null]` for missing samples, reduce
+    // this back to `null`.
+    def decorate_samples
+    if (params.wf.return_fastq || params.fastq) {
+        decorate_samples = samples
+            .map {meta, fname, stats ->
+                [meta["group_key"], meta, fname, stats]}
+            .groupTuple()
+            .map { key, metas, fnames, statss ->
+                if (fnames[0] == null) {fnames = null}
+                // put all the group_indexes into a single list for safe keeping (mainly testing)
+                [
+                    metas[0] + ["group_index":  metas.collect{it["group_index"]}],
+                    fnames, statss[0]]
+            }
+    } else {
+        decorate_samples = samples
+    }
+
+    pipeline(decorate_samples)
     pipeline.out.ingress_results
-    | map { [it, "${params.fastq ? "fastq" : "xam"}_ingress_results"] }
-    | concat (
-        pipeline.out.report.concat(pipeline.out.workflow_params)
-        | map { [it, null] }
-    )
-    | output
+        | map { [it, "${params.fastq ? "fastq" : "xam"}_ingress_results"] }
+        | concat (
+            pipeline.out.report.concat(pipeline.out.workflow_params)
+                | map { [it, null] })
+        | output
 }
 
 workflow.onComplete {

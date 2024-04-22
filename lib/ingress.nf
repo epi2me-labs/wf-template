@@ -176,33 +176,30 @@ def fastq_ingress(Map arguments)
     // for .groupTuple() on a channel in order to get all results for a sample
     // We don't decorate "alias" with a count because that messes up downstream
     // serialisation.
-    def ch_spread_result
-    ch_spread_result = ch_result
+    // Mix in the missing files from the sample sheet
+    // Add in a unique key for every emission
+    def ch_spread_result = ch_result
+        .mix (input.missing.map { meta, files -> [meta, files, null] })
         .map { meta, files, stats ->
             // new `arity: '1..*'` would be nice here
             files = files instanceof List ? files : [files]
-            meta["group_key"] = groupKey(meta["alias"], files.size())
-            meta["n_fastq"] = files.size()
-            [meta, files, stats]
+            new_keys = [
+                "group_key": groupKey(meta["alias"], files.size()),
+                "n_fastq": files.size()]
+            grp_index = (0..<files.size()).collect()
+            [meta + new_keys, files, grp_index, stats]
         }
-        .transpose()
+        .transpose(by: [1, 2])  // spread multiple fastq files into separate emissions
+        .map { meta, files, grp_i, stats ->
+            new_keys = [
+                "group_index": "${meta["alias"]}_${grp_i}"]
+            [meta + new_keys, files, stats]
+        }
 
-    // 1. add sample sheet entries without barcode dirs to the results channel
-    // (being careful to append in a grouping key)
-    // 2. pull the run IDs into the meta data
-    // 3. add in the read counts
-    ch_spread_result = ch_spread_result
-        .mix(
-            input.missing.map { meta, files ->
-                meta["group_key"] = groupKey(meta["alias"], 1)
-                meta["n_fastq"] = 1
-                [meta, files, null]
-            }
-        )
-    ch_result_run_IDs = add_run_IDs_to_meta(ch_spread_result)
-    return add_number_of_reads_to_meta(ch_result_run_IDs, "fastq")
+    def ch_final = add_number_of_reads_to_meta(
+        add_run_IDs_to_meta(ch_spread_result), "fastq")
+    return ch_final
 }
-
 
 
 /**
@@ -333,31 +330,37 @@ def xam_ingress(Map arguments)
             ch_result.to_merge,
             ch_result.to_catsort
         )
+        // TODO: this is largely similar to fastq_ingress, should be refactored
     
         // input.missing: sample sheet entries without barcode dirs
-        ch_result = input.missing
-        | mix(ch_result.no_files)
-        | map { meta, files ->
-            meta["group_key"] = groupKey(meta["alias"], 1)
-            meta["n_fastq"] = 1
-            [meta, files, null]
-        }
-        | mix(
-            fastcat(ch_to_fastq, margs, "BAM")
-            | map { meta, files, stats -> 
+        def ch_spread_result = input.missing
+            .mix(ch_result.no_files)  // TODO: we don't have this in fastq_ingress?
+            .map { meta, files -> [meta, files, null] }
+            .mix(
+                fastcat(ch_to_fastq, margs, "BAM")
+            )
+            .map { meta, files, stats -> 
                 // new `arity: '1..*'` would be nice here
                 files = files instanceof List ? files : [files]
-                meta["group_key"] = groupKey(meta["alias"], files.size())
-                meta["n_fastq"] = files.size()
-                [meta, files, stats]
+                new_keys = [
+                    "group_key": groupKey(meta["alias"], files.size()),
+                    "n_fastq": files.size()]
+                grp_index = (0..<files.size()).collect()
+                [meta + new_keys, files, grp_index, stats]
             }
-        )
-        | map{
-            meta, path, stats ->
-            [meta.findAll { it.key !in ['xai_fn', 'is_sorted'] }, path, stats]
-        }
-        ch_result_run_IDs = add_run_IDs_to_meta(ch_result)
-        return add_number_of_reads_to_meta(ch_result_run_IDs, "fastq")
+            .transpose(by: [1, 2])  // spread multiple fastq files into separate emissions
+            .map { meta, files, grp_i, stats ->
+                new_keys = [
+                    "group_index": "${meta["alias"]}_${grp_i}"]
+                [meta + new_keys, files, stats]
+            }
+            .map { meta, path, stats ->
+                [meta.findAll { it.key !in ['xai_fn', 'is_sorted'] }, path, stats]
+            }
+
+        def ch_final = add_number_of_reads_to_meta(
+            add_run_IDs_to_meta(ch_spread_result), "fastq")
+        return ch_final
     }
 
     // deal with samples with few-enough files for `samtools merge` first

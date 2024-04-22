@@ -98,12 +98,30 @@ def create_preliminary_meta(path, input_type, chunk_size, bam_headers_in_fastq):
     return prel_meta
 
 
-def add_output_n_fastq(meta, output_type, chunk_size):
+def amend_meta_for_output(meta, output_type, chunk_size, ingress_results_dir):
+    """Amend the metadata dict for the output type.
+
+    create_preliminary_meta() does double duty for both input and output files.
+    This function amends the metadata dict for the output type.
+    """
+    # additional meta data for fastq output
     if output_type == "fastq":
         meta["n_fastq"] = 1
         if chunk_size is not None:
             meta["n_fastq"] = meta["n_seqs"] // chunk_size + int(meta["n_seqs"] % chunk_size > 0)
         meta["group_key"] = {"groupSize": meta["n_fastq"], "groupTarget": meta["alias"]}
+        meta["group_index"] = [meta["alias"] + f"_{i}" for i in range(meta["n_fastq"])]
+
+    # clear some things that aren't present in no-stats cases
+    sample_results = ingress_results_dir / meta["alias"]
+    if not list(sample_results.glob("*stats*/run_ids")):
+        meta["run_ids"] = []
+        if output_type == "fastq":
+            meta["n_seqs"] = None
+        elif output_type == "bam":
+            meta["n_primary"] = None
+            meta["n_unmapped"] = None
+
     return meta
 
 
