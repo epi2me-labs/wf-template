@@ -87,3 +87,7 @@
 └── case10
     ├── reads.bam
     └── reads.bam.bai
+
+# A BAM file without a `@HD` line in the header.
+└── case11
+    └── reads.bam
