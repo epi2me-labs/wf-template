@@ -213,14 +213,23 @@ def test_metamap(prepare):
     for meta, _ in valid_inputs:
         # prepare() uses a function to parse both inputs and outputs,
         # add in some output specific things
-        meta = util.amend_meta_for_output(meta, output_type, chunk_size, ingress_results_dir)
+        expected_meta = util.amend_meta_for_output(
+            meta, output_type, chunk_size, ingress_results_dir
+        )
 
         # read what nextflow had
         with open(ingress_results_dir / meta["alias"] / "metamap.json", "r") as f:
-            metamap = json.load(f)
+            actual_meta = json.load(f)
+
+        # handle some things that do not gurantee ordering
+        for key_of_set in ["ds_runids", "ds_basecall_models"]:
+            assert (key_of_set in expected_meta) == (key_of_set in actual_meta)
+            if key_of_set in expected_meta:
+                expected_meta[key_of_set] = sorted(expected_meta[key_of_set])
+                actual_meta[key_of_set] = sorted(actual_meta[key_of_set])
 
         # validate
-        assert meta == metamap
+        assert expected_meta == actual_meta
 
 
 def test_reads_sorted(prepare):
