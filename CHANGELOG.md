@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove per-read stats from fastcat output by default.
 ### Fixed
 - Ingress code would return stats even when not requested.
+- `xam_ingress` failing on BAM files that are lacking a `@HD` line in the header.
 
 ## [v5.0.4]
 ### Fixed

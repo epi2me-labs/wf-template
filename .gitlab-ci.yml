@@ -72,7 +72,8 @@ docker-run:
                 "xam-case08", "xam-case08-s3",
                 "xam-case08-skip",
                 "xam-case09", "xam-case09-s3",
-                "xam-case10", "xam-case10-s3"
+                "xam-case10", "xam-case10-s3",
+                "xam-case11", "xam-case11-s3",
                 ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -457,3 +458,12 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case10/reads.bam"
               AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case10/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "xam-case11"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case11/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case11/reads.bam bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case11-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case11/reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case11/reads.bam bam $$PWD/$$CI_PROJECT_NAME
