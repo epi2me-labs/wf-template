@@ -91,3 +91,22 @@
 # A BAM file without a `@HD` line in the header.
 └── case11
     └── reads.bam
+
+# A single uBAM with RG headers
+# The workflow should populate the metamap RG entries.
+└── case12
+    └── reads.bam
+
+# Multiple uBAM with RG headers
+# The workflow should populate the metamap RG entries with the union of RG DS entries.
+└── case13
+    ├── reads0.bam
+    ├── reads1.bam
+    └── reads2.bam
+
+# Multiple uBAM with RG headers
+# The workflow should fail as more than one basecaller_cfg is present between the input files.
+└── case14
+    ├── reads0.bam
+    ├── reads1.bam
+    └── reads2.bam

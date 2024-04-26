@@ -58,6 +58,8 @@ def create_preliminary_meta(path, input_type, chunk_size, bam_headers_in_fastq):
         )
     n_primary = 0
     n_unmapped = 0
+    ds_runids = set()
+    ds_basecall_models = set()
     for file in target_files:
         if input_type == "fastq":
             with pysam.FastxFile(file) as f:
@@ -74,6 +76,14 @@ def create_preliminary_meta(path, input_type, chunk_size, bam_headers_in_fastq):
                         run_ids.add(run_id)
         else:
             with pysam.AlignmentFile(file, check_sq=False) as f:
+                # populate metamap items from RG.DS
+                for read_group in f.header.get("RG", []):
+                    for ds_kv in read_group.get("DS", "").split():
+                        k, v = ds_kv.split("=", 1)
+                        if k == "runid":
+                            ds_runids.add(v)
+                        elif k == "basecall_model":
+                            ds_basecall_models.add(v)
                 for entry in f:
                     # Just take unmapped reads and primary alignments
                     if entry.is_unmapped:
@@ -87,13 +97,20 @@ def create_preliminary_meta(path, input_type, chunk_size, bam_headers_in_fastq):
                     if run_id is not None:
                         run_ids.add(run_id)
     # add n_reads, n_primary or n_unmapped to the dict to be checked later
-    prel_meta = dict(names=names, run_ids=run_ids)
+    prel_meta = dict(
+        names=names,
+        run_ids=run_ids,
+    )
     # if `bam_headers_in_fastq`, `xam_ingress()` was run with `return_fastq: true`
     if input_type == "fastq" or bam_headers_in_fastq:
         prel_meta["n_seqs"] = len(names)
     else:
         prel_meta["n_primary"] = n_primary
         prel_meta["n_unmapped"] = n_unmapped
+    # add DS tags for BAM
+    if input_type == "bam":
+        prel_meta["ds_runids"] = list(ds_runids)
+        prel_meta["ds_basecall_models"] = list(ds_basecall_models)
 
     return prel_meta
 
