@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.1.1]
+### Fixed
+- `xam_ingress` failing on BAM files that are lacking a `@HD` line in the header.
+
 ## [v5.1.0]
 ### Added
 - Functionality to allow chunking of fastq outputs from ingress. Additional keys in meta information are added to reflect this.
@@ -14,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove per-read stats from fastcat output by default.
 ### Fixed
 - Ingress code would return stats even when not requested.
-- `xam_ingress` failing on BAM files that are lacking a `@HD` line in the header.
 
 ## [v5.0.4]
 ### Fixed
