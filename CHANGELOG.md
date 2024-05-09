@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.1.3]
+### Changed
+- `workflow-glue` CLI bootstrapping amended to skip imports of all components when not required.
+
 ## [v5.1.2]
 ### Added
 - `xam_ingress` reads `basecall_model` and `runid` to metamap from RG DS tags.
