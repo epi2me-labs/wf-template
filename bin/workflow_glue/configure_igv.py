@@ -78,16 +78,15 @@ def get_reference_options(ref, fai=None, gzi=None):
     """
     # initialise the options dict and add the index attributes later
     ref_opts = {
-        "reference": {
-            "id": "ref",
-            "name": "ref",
-            "indexed": fai is not None,
-            "wholeGenomeView": False,
-            "fastaURL": ref,
-        }
+        "id": "ref",
+        "name": "ref",
+        "wholeGenomeView": False,
+        "fastaURL": ref,
     }
+    if fai is not None:
+        ref_opts["indexURL"] = fai
     if gzi is not None:
-        ref_opts["reference"]["compressedIndexURL"] = gzi
+        ref_opts["compressedIndexURL"] = gzi
     return ref_opts
 
 
@@ -141,7 +140,7 @@ def main(args):
     ref_dict, bams_with_indices, vcfs_with_indices = parse_fnames(args.fofn)
 
     # initialise the IGV options dict with the reference options
-    json_dict = get_reference_options(**ref_dict)
+    json_dict = {"reference": get_reference_options(**ref_dict)}
 
     # if we got JSON files with extra options for the alignment / variant tracks, read
     # them
