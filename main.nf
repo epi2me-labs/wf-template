@@ -37,8 +37,8 @@ process getVersions {
 process makeReport {
     label "wftemplate"
     input:
-        val metadata
-        tuple path(stats, stageAs: "stats_*"), val(no_stats)
+        // `analysis_group` can be `null`
+        tuple val(analysis_group), val(metadata), path(stats, stageAs: "stats_*")
         path client_fields
         path "versions/*"
         path "params.json"
@@ -46,13 +46,16 @@ process makeReport {
     output:
         path "wf-template-*.html"
     script:
-        String report_name = "wf-template-report.html"
+        String report_name = analysis_group ? \
+            "wf-template-$analysis_group-report.html" : "wf-template-report.html"
         String metadata = new JsonBuilder(metadata).toPrettyString()
-        String stats_args = no_stats ? "" : "--stats $stats"
+        String group_arg = analysis_group ? "--analysis_group $analysis_group" : ""
+        String stats_args = stats ? "--stats $stats" : ""
         String client_fields_args = client_fields.name == OPTIONAL_FILE.name ? "" : "--client_fields $client_fields"
     """
     echo '${metadata}' > metadata.json
     workflow-glue report $report_name \
+        $group_arg \
         --versions versions \
         $stats_args \
         $client_fields_args \
@@ -129,24 +132,28 @@ workflow pipeline {
         software_versions = getVersions()
         workflow_params = getParams()
 
-        // get metadata and stats files, keeping them ordered (could do with transpose I suppose)
-        reads.multiMap{ meta, path, index, stats ->
-            meta: meta
-            stats: stats ?: OPTIONAL_FILE
-        }.set { for_report }
-        metadata = for_report.meta.collect()
-        // create a file list of the stats, and signal if its empty or not
-        stats = for_report.stats | ifEmpty(OPTIONAL_FILE) | collect | map { [it, it[0] == OPTIONAL_FILE] } 
- 
+        for_report = reads
+        | map { meta, path, index, stats ->
+            // keep track of whether a sample has stats (since it's possible that there
+            // are are samples that only occurred in the sample sheet but didn't have
+            // any reads)
+            [meta.analysis_group, meta + [has_stats: stats as boolean], stats]
+        }
+        | groupTuple
+        | map { analysis_group, metas, stats ->
+            // get rid of `null` entries from the stats list (the process will still
+            // launch if the list is empty)
+            [analysis_group, metas, stats - null]
+        }
+
         report = makeReport(
-            metadata,
-            stats,
+            for_report,
             client_fields,
             software_versions,
             workflow_params,
             workflow.manifest.version
         )
-        
+
         // replace `null` with path to optional file
         reads
         | map { 

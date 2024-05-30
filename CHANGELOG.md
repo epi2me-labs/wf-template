@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v5.1.4]
 ### Added
+- Support for an optional "groups" column in the sample sheet providing grouping information for the input samples.
 - Support for creating IGV JSON config files.
 ### Changed
 - Updated `ezcharts` to v0.9.1, showing coverage and accuracy plots when available.

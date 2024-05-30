@@ -52,6 +52,7 @@ docker-run:
                 "case16",
                 "case16-nonexisting-client-fields",
                 "case17",
+                "case18",
                 "mutateParams",
                 "xam-single-file", "xam-single-file-s3",
                 "xam-case01", "xam-case01-s3",
@@ -299,6 +300,18 @@ docker-run:
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/fastq_ingress/case17 fastq $$PWD/$$CI_PROJECT_NAME
                 && grep "ERROR: Client info is not correctly formatted" $$PWD/$$CI_PROJECT_NAME/wf-template-report.html
+
+        - if: $MATRIX_NAME == "case18"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case18 --sample_sheet test_data/fastq_ingress/case18/sample_sheet.csv"
+              NF_IGNORE_PROCESSES: ""
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD test_data/fastq_ingress/case18 fastq $$PWD/$$CI_PROJECT_NAME
+                && (
+                  set -ex;
+                  grep "<b>customer01</b> analysis group: sample1, sample2\." $$PWD/$$CI_PROJECT_NAME/wf-template-customer01-report.html;
+                  grep "<b>customer02</b> analysis group: sample3\." $$PWD/$$CI_PROJECT_NAME/wf-template-customer02-report.html;
+                )
 
         - if: $MATRIX_NAME == "mutateParams"
           variables:
