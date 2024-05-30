@@ -281,6 +281,14 @@ def get_valid_inputs(input_path, input_type, sample_sheet, chunk_size, params):
                     "barcode",
                     drop=False,
                 )
+                # ingress uses `groupKey` for the 'analysis_group' column in the sample
+                # sheet
+                if "analysis_group" in sample_sheet.columns:
+                    analysis_group_counts = sample_sheet.value_counts("analysis_group")
+                    sample_sheet["analysis_group"] = [
+                        {"groupSize": analysis_group_counts[grp], "groupTarget": grp}
+                        for grp in sample_sheet["analysis_group"]
+                    ]
                 # now, get the corresponding inputs for each entry in the sample sheet
                 # (sample sheet entries for which no input directory was found will have
                 # `None` as their input path in `valid_inputs`); we need a dict mapping

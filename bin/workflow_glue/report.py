@@ -1,7 +1,7 @@
 """Create workflow report."""
 import json
 
-from dominate.tags import p
+from dominate.tags import b, p
 from ezcharts.components import fastcat
 from ezcharts.components.reports import labs
 from ezcharts.layout.snippets import Tabs
@@ -14,9 +14,41 @@ from .util import get_named_logger, wf_parser  # noqa: ABS101
 def main(args):
     """Run the entry point."""
     logger = get_named_logger("Report")
+    grouped = args.analysis_group is not None
+    logger.info(
+        f"Creating report for analysis group '{args.analysis_group}'."
+        if grouped
+        else "Creating report for all samples."
+    )
+    report_title = "Workflow Template Sequencing report"
+    if grouped:
+        report_title += f" for analysis group '{args.analysis_group}'"
     report = labs.LabsReport(
-        "Workflow Template Sequencing report", "wf-template",
+        report_title, "wf-template",
         args.params, args.versions, args.wf_version)
+
+    with open(args.metadata, "r") as f:
+        metadata = json.load(f)
+        sample_details = sorted([{
+            'sample': d['alias'],
+            'type': d['type'],
+            'barcode': d['barcode']
+        } for d in metadata], key=lambda x: x["sample"])
+
+    sample_names = [d['sample'] for d in sample_details]
+    samples_with_stats = tuple(d["alias"] for d in metadata if d["has_stats"])
+
+    if grouped:
+        with report.add_section(
+            f"Analysis group report: '{args.analysis_group}'", "Intro"
+        ):
+            p(
+                "This report contains all samples of the ",
+                b(args.analysis_group),
+                " analysis group: ",
+                ", ".join(sample_names),
+                "."
+            )
 
     client_fields = None
     if args.client_fields:
@@ -42,21 +74,13 @@ def main(args):
             else:
                 p(error)
 
-    with open(args.metadata) as metadata:
-        sample_details = [{
-            'sample': d['alias'],
-            'type': d['type'],
-            'barcode': d['barcode']
-        } for d in json.load(metadata)]
-
     if args.stats:
         with report.add_section("Read summary", "Read summary"):
-            names = tuple(d['sample'] for d in sample_details)
             stats = tuple(args.stats)
             if len(stats) == 1:
                 stats = stats[0]
-                names = names[0]
-            fastcat.SeqSummary(stats, sample_names=names)
+                samples_with_stats = samples_with_stats[0]
+            fastcat.SeqSummary(stats, sample_names=samples_with_stats)
 
     with report.add_section("Sample Metadata", "Sample Metadata"):
         tabs = Tabs()
@@ -74,20 +98,21 @@ def argparser():
     """Argument parser for entrypoint."""
     parser = wf_parser("report")
     parser.add_argument("report", help="Report output file")
+    parser.add_argument("--analysis_group", help="Analysis group name.")
     parser.add_argument(
         "--stats", nargs='+',
         help="Fastcat per-read stats, ordered as per entries in --metadata.")
     parser.add_argument(
-        "--metadata", default='metadata.json', required=True,
+        "--metadata", required=True,
         help="sample metadata")
     parser.add_argument(
         "--versions", required=True,
         help="directory containing CSVs containing name,version.")
     parser.add_argument(
-        "--params", default=None, required=True,
+        "--params", required=True,
         help="A JSON file containing the workflow parameter key/values")
     parser.add_argument(
-        "--client_fields", default=None, required=False,
+        "--client_fields",
         help="A JSON file containing useful key/values for display")
     parser.add_argument(
         "--wf_version", default='unknown',

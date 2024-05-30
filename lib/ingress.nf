@@ -1077,9 +1077,31 @@ def get_sample_sheet(Path sample_sheet, ArrayList required_sample_types) {
     // concat the channel holding the path to the sample sheet to `ch_err` and call
     // `.last()` to make sure that the error-checking closure above executes before
     // emitting values from the CSV
-    return ch_err.concat(Channel.fromPath(sample_sheet)).last().splitCsv(
+    ch_sample_sheet = ch_err.concat(Channel.fromPath(sample_sheet)).last().splitCsv(
         header: true, quote: '"'
     )
+    // in case there is an 'analysis_group' column, we need to define a `groupKey` to
+    // allow for non-blocking calls of `groupTuple` later (on the values in the
+    // 'analysis_group' column); we first collect the sample sheet in a single list of
+    // maps and then count the occurrences of each group before using these to create
+    // the `groupKey` objects; note that the below doesn't do anything if there is no
+    // 'analysis_group' column
+    ch_group_counts = ch_sample_sheet
+    | collect
+    | map { rows -> rows.collect { it.analysis_group } .countBy { it } }
+
+    // now we `combine` the analysis group counts with the sample sheet channel and add
+    // the `groupKey` to the entries
+    ch_sample_sheet = ch_sample_sheet
+    | combine(ch_group_counts)
+    | map { row, group_counts ->
+        if (row.analysis_group) {
+            int counts = group_counts[row.analysis_group]
+            row = row + [analysis_group: groupKey(row.analysis_group, counts)]
+        }
+        row
+    }
+    return ch_sample_sheet
 }
 
 

@@ -30,6 +30,11 @@ ERROR_MESSAGES = [
     ("sample_sheet_1.csv.zip", "The sample sheet doesn't seem to be a CSV file.", ""),
     ("sample_sheet_1.xlsx", "The sample sheet doesn't seem to be a CSV file.", ""),
     ("sample_sheet_10.csv", "", ""),  # check this does not fail
+    (
+        "sample_sheet_11.csv",
+        "if an 'analysis_group' column exists, it needs values in each row",
+        "",
+    ),
 ]
 
 

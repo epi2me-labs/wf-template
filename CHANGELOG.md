@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Added
+- Support for an optional "groups" column in the sample sheet providing grouping information for the input samples.
 - Support for creating IGV JSON config files.
 
 ## [v5.1.3]

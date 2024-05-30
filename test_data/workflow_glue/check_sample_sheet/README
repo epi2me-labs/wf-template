@@ -11,3 +11,4 @@ utf8_bom.csv                # MS Excel byte order mark weirdness
 sample_sheet_1.csv.zip      # Provide not a CSV file
 sample_sheet_1.xlsx         # Provide not a CSV file (Excel format)
 sample_sheet_10.csv         # Test sniffer bug [CW-3786]
+sample_sheet_11.csv         # analysis_group column present but contains a missing value

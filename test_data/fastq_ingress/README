@@ -204,12 +204,16 @@
 │   ├── client_fields.json
 │   └── sample_sheet.csv
 
-# more sample sheets for testing sample sheet validation
-├── extra_sample_sheets
-│   ├── sample_sheet_1.csv          # correct
-│   ├── sample_sheet_2.csv          # barcode column missing
-│   ├── sample_sheet_3.csv          # alias column missing
-│   ├── sample_sheet_4.csv          # barcode column not unique
-│   ├── sample_sheet_5.csv          # alias column not unique
-│   ├── sample_sheet_6.csv          # malformed CSV (unequal number of fields)
-│   └── sample_sheet_7.csv          # type column contains disallowed values
+# Sample sheet contains "group" column
+├── case18
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
