@@ -194,6 +194,7 @@ workflow {
             "watch_path": params.wf.watch_path,
             "fastq_chunk": params.fastq_chunk,
             "per_read_stats": params.wf.per_read_stats,
+            "allow_multiple_basecall_models": params.wf.allow_multiple_basecall_models,
         ])
     } else {
         // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
@@ -208,7 +209,8 @@ workflow {
             "watch_path": params.wf.watch_path,
             "return_fastq": params.wf.return_fastq,
             "fastq_chunk": params.fastq_chunk,
-            "per_read_stats": params.wf.per_read_stats
+            "per_read_stats": params.wf.per_read_stats,
+            "allow_multiple_basecall_models": params.wf.allow_multiple_basecall_models,
         ])
     }
 

@@ -53,6 +53,11 @@ docker-run:
                 "case16-nonexisting-client-fields",
                 "case17",
                 "case18",
+                "case19",
+                "case20",
+                "case21",
+                "case22",
+                "case22-allow_multiple_basecall_models",
                 "mutateParams",
                 "xam-single-file", "xam-single-file-s3",
                 "xam-case01", "xam-case01-s3",
@@ -75,10 +80,10 @@ docker-run:
                 "xam-case09", "xam-case09-s3",
                 "xam-case10", "xam-case10-s3",
                 "xam-case11", "xam-case11-s3",
-                # test RG DS parsing
                 "xam-case12", "xam-case12-s3",
                 "xam-case13", "xam-case13-s3",
                 "xam-case14", "xam-case14-s3",
+                "xam-case14-keep_unaligned", "xam-case14-s3-keep_unaligned",
               ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -313,6 +318,37 @@ docker-run:
                   grep "<b>customer02</b> analysis group: sample3\." $$PWD/$$CI_PROJECT_NAME/wf-template-customer02-report.html;
                 )
 
+        - if: $MATRIX_NAME == "case19"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case19"
+            AFTER_NEXTFLOW_CMD: >
+              $TEST_CMD test_data/fastq_ingress/case19 fastq $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "case20"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case20"
+            AFTER_NEXTFLOW_CMD: >
+              $TEST_CMD test_data/fastq_ingress/case20 fastq $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "case21"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case21"
+            AFTER_NEXTFLOW_CMD: >
+              $TEST_CMD test_data/fastq_ingress/case21 fastq $$PWD/$$CI_PROJECT_NAME
+
+        - if: $MATRIX_NAME == "case22"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case22"
+            AFTER_NEXTFLOW_CMD: >
+              set -ex; $TEST_CMD test_data/fastq_ingress/case22 fastq $$PWD/$$CI_PROJECT_NAME
+              && grep "Found multiple basecall models for sample 'case22':" .nextflow.log
+        - if: $MATRIX_NAME == "case22-allow_multiple_basecall_models"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case22 --wf.allow_multiple_basecall_models"
+            AFTER_NEXTFLOW_CMD: >
+              set -ex; $TEST_CMD test_data/fastq_ingress/case22 fastq $$PWD/$$CI_PROJECT_NAME
+              && ! grep "Found multiple basecall models for sample 'case22':" .nextflow.log
+
         - if: $MATRIX_NAME == "mutateParams"
           variables:
               NF_WORKFLOW_OPTS: "--fastq no_reads.gz --mutate_fastq test_data/reads.fastq.gz"
@@ -506,10 +542,20 @@ docker-run:
         - if: $MATRIX_NAME == "xam-case14"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case14/"
-              ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Your input data contains reads basecalled with more than one basecaller model."
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case14/ bam $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "xam-case14-s3"
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case14/"
-              ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Your input data contains reads basecalled with more than one basecaller model."
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case14/ bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case14-keep_unaligned"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case14/ --wf.keep_unaligned"
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case14/ bam $$PWD/$$CI_PROJECT_NAME
+                && grep "Found multiple basecall models for sample 'case14':" .nextflow.log
+        - if: $MATRIX_NAME == "xam-case14-s3-keep_unaligned"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case14/ --wf.keep_unaligned"
+              AFTER_NEXTFLOW_CMD: >
+                $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case14/ bam $$PWD/$$CI_PROJECT_NAME
+                && grep "Found multiple basecall models for sample 'case14':" .nextflow.log
