@@ -1,5 +1,4 @@
 import argparse
-from itertools import chain
 import json
 from pathlib import Path
 import sys
@@ -94,7 +93,7 @@ def args():
 def prepare():
     """Prepare data for tests."""
     input_path, input_type, output_type, sample_sheet, ingress_results_dir, chunk_size, params = args()
-    valid_inputs = util.get_valid_inputs(input_path, input_type, sample_sheet, chunk_size, params)
+    valid_inputs = util.get_valid_inputs(input_path, input_type, output_type, sample_sheet, params)
     return ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params
 
 
@@ -113,11 +112,11 @@ def test_result_subdirs(prepare):
     assert set(subdirs) == set([meta["alias"] for meta, _ in valid_inputs])
 
 
-def test_entry_names_and_run_ids(prepare):
-    """Test sequence names and run IDs.
+def test_names_run_ids_and_basecallers(prepare):
+    """Test sequence names, run IDs and basecaller IDs.
 
-    Tests if the concatenated sequences indeed contain all the read IDs of the target
-    files in the valid inputs.
+    Tests if the concatenated sequences indeed contain all the read IDs, run_ids
+    and basecallers of the target files in the valid inputs.
     """
     ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     # unless when run with `--bam ... --wf.return_fastq` the output type (i.e. the type
@@ -138,12 +137,14 @@ def test_entry_names_and_run_ids(prepare):
 
         entries = util.create_preliminary_meta(
             ingress_results_dir / meta["alias"] / res_seqs_fname,
-            output_type, chunk_size,
-            params["wf"]["return_fastq"])
+            output_type,
+            output_type,
+        )
 
         # now collect the entries from the individual input files
         exp_read_names = []
         exp_run_ids = []
+        exp_basecallers = []
         target_files = (
             util.get_target_files(path, input_type=input_type)
             if path.is_dir()
@@ -156,12 +157,13 @@ def test_entry_names_and_run_ids(prepare):
                 and util.is_unaligned(file)
             ):
                 continue
-            curr_entries = util.create_preliminary_meta(
-                file, input_type, chunk_size, False)
+            curr_entries = util.create_preliminary_meta(file, input_type, output_type)
             exp_read_names += curr_entries["names"]
             exp_run_ids += curr_entries["run_ids"]
+            exp_basecallers += curr_entries["basecall_models"]
         assert set(entries["names"]) == set(exp_read_names)
         assert set(entries["run_ids"]) == set(exp_run_ids)
+        assert set(entries["basecall_models"]) == set(exp_basecallers)
 
 
 def test_stats_present(prepare):
@@ -213,16 +215,37 @@ def test_metamap(prepare):
     for meta, _ in valid_inputs:
         # prepare() uses a function to parse both inputs and outputs,
         # add in some output specific things
+        stats_dir_missing = not list(
+            (ingress_results_dir / meta["alias"]).glob("*stats*")
+        )
+        # The stats dir might be missing; this happens in four cases:
+        # 1. The sample was only present in the sample sheet.
+        # 2. The sample had input data, but fastcat / bamstats was not run.
+        # 3. The sample had more than one basecall model and
+        #    `--wf.allow_multiple_basecall_models` was `false`.
+        # 4. The sample was uBAM and `--wf.keep_unaligned` was false.
+        #
+        # In the first two cases, ingress didn't get to see any stats and thus we need
+        # to clear the fields in the meta dict that would have been populated from the
+        # stats dir.
+        too_many_basecall_models = (
+            len(meta["basecall_models"]) > 1
+            and not params["wf"]["allow_multiple_basecall_models"]
+        )
+        clear_stats_info = (stats_dir_missing and not too_many_basecall_models) or (
+            meta.get("is_unaligned") and not params["wf"]["keep_unaligned"]
+        )
+
         expected_meta = util.amend_meta_for_output(
-            meta, output_type, chunk_size, ingress_results_dir
+            meta, output_type, chunk_size, clear_stats_info
         )
 
         # read what nextflow had
         with open(ingress_results_dir / meta["alias"] / "metamap.json", "r") as f:
             actual_meta = json.load(f)
 
-        # handle some things that do not gurantee ordering
-        for key_of_set in ["ds_runids", "ds_basecall_models"]:
+        # handle some things that do not guarantee ordering
+        for key_of_set in ["run_ids", "basecall_models"]:
             assert (key_of_set in expected_meta) == (key_of_set in actual_meta)
             if key_of_set in expected_meta:
                 expected_meta[key_of_set] = sorted(expected_meta[key_of_set])

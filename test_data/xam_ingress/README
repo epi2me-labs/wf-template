@@ -105,7 +105,7 @@
     └── reads2.bam
 
 # Multiple uBAM with RG headers
-# The workflow should fail as more than one basecaller_cfg is present between the input files.
+# The workflow should print a warning as more than one basecall model is present between the input files.
 └── case14
     ├── reads0.bam
     ├── reads1.bam

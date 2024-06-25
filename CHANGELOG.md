@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for CRAM alignment format when creating IGV config files.
 - Support for an optional "analysis_groups" column in the sample sheet providing grouping information for the input samples.
+### Changed
+- Basecall models are now obtained from FASTQ / BAM input files via fastcat / bamstats output and added to sample meta map.
 
 ## [v5.1.4]
 ### Added

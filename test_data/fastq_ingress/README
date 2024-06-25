@@ -217,3 +217,32 @@
 │   ├── barcode03
 │   │   └── reads0.fastq
 │   └── sample_sheet.csv
+
+# FASTQ headers contain basecaller info in form of `basecall_model_version_id=<basecall_model>`
+├── case19
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir03
+│   │   └── reads0.fastq
+│   └── dir04
+│       └── garbage.txt
+
+# FASTQ headers contain RG tag in form of 'RG:Z:<run_id><basecall_model>' (like when generated with `samtools fastq` from dorado BAM output)
+├── case20
+│   └── reads.fq
+
+# FASTQ headers without run ID or basecaller information
+├── case21
+│   └── reads.fq
+
+# Two basecall models in the same sample
+├── case22
+│   ├── reads0.fastq
+│   └── reads1.fastq
