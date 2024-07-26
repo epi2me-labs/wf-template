@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [Unreleased]
+### Changed
+- Bumped wf-common to shab540ba556d0d8c38bea8fec520f0bdedd9e59520.
+
 ## [v5.2.1]
 ### Changed
 - Updated `epi2melabs` to v0.0.56 to allow schemas without a `demo_url` field.
