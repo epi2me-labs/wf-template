@@ -84,6 +84,7 @@ docker-run:
                 "xam-case13", "xam-case13-s3",
                 "xam-case14", "xam-case14-s3",
                 "xam-case14-keep_unaligned", "xam-case14-s3-keep_unaligned",
+                "xam-case15", "xam-case15-s3",
               ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -532,11 +533,11 @@ docker-run:
 
         - if: $MATRIX_NAME == "xam-case13"
           variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case13/"
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case13/ --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case13/ bam $$PWD/$$CI_PROJECT_NAME
         - if: $MATRIX_NAME == "xam-case13-s3"
           variables:
-              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case13/"
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case13/ --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case13/ bam $$PWD/$$CI_PROJECT_NAME
 
         - if: $MATRIX_NAME == "xam-case14"
@@ -559,3 +560,12 @@ docker-run:
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case14/ bam $$PWD/$$CI_PROJECT_NAME
                 && grep "Found multiple basecall models for sample 'case14':" .nextflow.log
+
+        - if: $MATRIX_NAME == "xam-case15"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case15"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case15/ bam $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "xam-case15-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case15"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case15/ bam $$PWD/$$CI_PROJECT_NAME

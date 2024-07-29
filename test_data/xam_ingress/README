@@ -1,4 +1,4 @@
-# top-level directory with BAM and uBAM files (causes ""Found mixed headers in
+# top-level directory with BAM and uBAM files (causes "Found mixed headers in
 # (u)BAM files of sample ..." error)
 ├── case01
 │   ├── garbage.txt
@@ -97,7 +97,7 @@
 └── case12
     └── reads.bam
 
-# Multiple uBAM with RG headers
+# Multiple uBAM with RG headers with different runid
 # The workflow should populate the metamap RG entries with the union of RG DS entries.
 └── case13
     ├── reads0.bam
@@ -107,6 +107,12 @@
 # Multiple uBAM with RG headers
 # The workflow should print a warning as more than one basecall model is present between the input files.
 └── case14
+    ├── reads0.bam
+    ├── reads1.bam
+    └── reads2.bam
+
+# case02 dir1 BAM with additional RG headers with same runid
+└── case15
     ├── reads0.bam
     ├── reads1.bam
     └── reads2.bam

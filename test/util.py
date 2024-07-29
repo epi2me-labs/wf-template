@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 import re
 
@@ -100,14 +101,25 @@ def create_preliminary_meta(path, input_type, output_type):
                         basecall_models.add(basecall_model)
         else:
             with pysam.AlignmentFile(file, check_sq=False) as f:
+                # map (run_id, basecall_model) pairs to RG.IDs in order
+                # to determine if RGs have had collision avoidance applied
+                runid_model_to_rgid = defaultdict(set)
                 # populate metamap items from RG.DS
                 for read_group in f.header.get("RG", []):
+                    rg_id = read_group.get("ID")
+                    rg_runid = None
+                    rg_basecall_model = None
                     for ds_kv in read_group.get("DS", "").split():
                         k, v = ds_kv.split("=", 1)
                         if k == "runid":
-                            run_ids.add(v)
+                            rg_runid = v
+                            run_ids.add(rg_runid)
                         elif k == "basecall_model":
-                            basecall_models.add(v)
+                            rg_basecall_model = v
+                            basecall_models.add(rg_basecall_model)
+                    if rg_id and rg_runid and rg_basecall_model:
+                        compound_key = f"{rg_runid}/{rg_basecall_model}"
+                        runid_model_to_rgid[compound_key].add(rg_id)
                 for entry in f:
                     # Just take unmapped reads and primary alignments
                     if entry.is_unmapped:
@@ -119,6 +131,13 @@ def create_preliminary_meta(path, input_type, output_type):
                     names.append(entry.query_name)
                     if run_id is not None:
                         run_ids.add(run_id)
+                # looks like RG.IDs have collided without merging (CW-4608)
+                if any(len(rgids) > 1 for rgids in runid_model_to_rgid.values()):
+                    raise ValueError(
+                        "BAM appears to have multiple RG.IDs corresponding to "
+                        "the same sequencing run in the same file. Suspect that "
+                        "this BAM was created with samtools merge without -c."
+                    )
     # add n_reads, run_ids, etc to the dict to be checked later
     prel_meta = dict(
         names=names,
