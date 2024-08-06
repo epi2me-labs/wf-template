@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v5.2.2]
 ### Changed
 - Matching RG.IDs found in XAM headers are now combined across all input XAM for a particular sample and emitted once, instead of emitting new RG.IDs for each XAM file.
 - Bumped wf-common to shab540ba556d0d8c38bea8fec520f0bdedd9e59520.
