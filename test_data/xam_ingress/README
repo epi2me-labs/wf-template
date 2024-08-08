@@ -111,8 +111,14 @@
     ├── reads1.bam
     └── reads2.bam
 
-# case02 dir1 BAM with additional RG headers with same runid
+# case02 dir1 BAM with additional RG headers with same acquisition style runid
 └── case15
+    ├── reads0.bam
+    ├── reads1.bam
+    └── reads2.bam
+
+# case02 dir1 BAM with additional RG headers with same protocol style runid
+└── case16
     ├── reads0.bam
     ├── reads1.bam
     └── reads2.bam
