@@ -197,15 +197,15 @@ def fastq_ingress(Map arguments)
         .map { meta, files, stats ->
             // new `arity: '1..*'` would be nice here
             files = files instanceof List ? files : [files]
-            new_keys = [
+            def new_keys = [
                 "group_key": groupKey(meta["alias"], files.size()),
                 "n_fastq": files.size()]
-            grp_index = (0..<files.size()).collect()
+            def grp_index = (0..<files.size()).collect()
             [meta + new_keys, files, grp_index, stats]
         }
         .transpose(by: [1, 2])  // spread multiple fastq files into separate emissions
         .map { meta, files, grp_i, stats ->
-            new_keys = [
+            def new_keys = [
                 "group_index": "${meta["alias"]}_${grp_i}"]
             [meta + new_keys, files, stats]
         }
@@ -358,15 +358,15 @@ def xam_ingress(Map arguments)
             .map { meta, files, stats -> 
                 // new `arity: '1..*'` would be nice here
                 files = files instanceof List ? files : [files]
-                new_keys = [
+                def new_keys = [
                     "group_key": groupKey(meta["alias"], files.size()),
                     "n_fastq": files.size()]
-                grp_index = (0..<files.size()).collect()
+                def grp_index = (0..<files.size()).collect()
                 [meta + new_keys, files, grp_index, stats]
             }
             .transpose(by: [1, 2])  // spread multiple fastq files into separate emissions
             .map { meta, files, grp_i, stats ->
-                new_keys = [
+                def new_keys = [
                     "group_index": "${meta["alias"]}_${grp_i}"]
                 [meta + new_keys, files, stats]
             }
@@ -399,7 +399,7 @@ def xam_ingress(Map arguments)
     ch_to_validate = ch_result.indexed
     | map{
         meta, paths ->
-        bai = paths && meta.xai_fn ? file(meta.xai_fn) : null
+        def bai = paths && meta.xai_fn ? file(meta.xai_fn) : null
         [meta, paths, bai]
     }
     | branch {
