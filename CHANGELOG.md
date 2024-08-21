@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - Resumed workflow leading to mismatched (BAM, BAI) validateIndex pairs when calling `xam_ingress` more than once.
+- Broken Markdown rendering of install and run section of README in desktop application.
 
 ## [v5.2.3]
 ### Changed
