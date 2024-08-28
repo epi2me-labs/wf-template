@@ -12,6 +12,21 @@ INPUT_TYPES_EXTENSIONS = {
 }
 
 
+def validate_xam_index(xam_file):
+    """Use fetch to validate the index.
+
+    Invalid indexes will fail the call with a ValueError:
+    ValueError: fetch called on bamfile without index
+    """
+    with pysam.AlignmentFile(xam_file, check_sq=False) as alignments:
+        try:
+            alignments.fetch()
+            has_valid_index = True
+        except ValueError:
+            has_valid_index = False
+    return has_valid_index
+
+
 def check_input_type(input_type):
     if input_type not in INPUT_TYPES_EXTENSIONS:
         raise ValueError(
@@ -57,8 +72,17 @@ def create_preliminary_meta(path, input_type, output_type):
         raise ValueError(
             f"`path` needs to be a list or path to a file or directory (got '{path}')."
         )
+    # Metadata specific for xam_ingress
     n_primary = 0
     n_unmapped = 0
+    src_xam = None
+    # Ensure that there is a single file, and that it is not s3
+    if len(target_files) == 1 and 'test_data_from_S3' not in target_files[0].as_posix():
+        src_xam = target_files[0].as_posix()
+    src_xai = None
+    if src_xam:
+        if Path(src_xam + '.bai').exists() and validate_xam_index(src_xam):
+            src_xai = src_xam + '.bai'
     basecall_models = set()
     for file in target_files:
         if input_type == "fastq":
@@ -100,7 +124,13 @@ def create_preliminary_meta(path, input_type, output_type):
                     if basecall_model is not None:
                         basecall_models.add(basecall_model)
         else:
+            unaligned = is_unaligned(file)
             with pysam.AlignmentFile(file, check_sq=False) as f:
+                xam_sorted = f.header.get('HD', {}).get('SO') == 'coordinate'
+                # Check if the data are aligned
+                if not unaligned and not xam_sorted:
+                    src_xam = None
+                    src_xai = None
                 # map (run_id, basecall_model) pairs to RG.IDs in order
                 # to determine if RGs have had collision avoidance applied
                 runid_model_to_rgid = defaultdict(set)
@@ -149,6 +179,8 @@ def create_preliminary_meta(path, input_type, output_type):
     else:
         prel_meta["n_primary"] = n_primary
         prel_meta["n_unmapped"] = n_unmapped
+        prel_meta["src_xam"] = src_xam
+        prel_meta["src_xai"] = src_xai
 
     return prel_meta
 
@@ -174,6 +206,8 @@ def amend_meta_for_output(meta, output_type, chunk_size, clear_stats_info):
         if output_type == "fastq":
             meta["n_seqs"] = None
         elif output_type == "bam":
+            meta['src_xam'] = None
+            meta['src_xai'] = None
             meta["n_primary"] = None
             meta["n_unmapped"] = None
 
