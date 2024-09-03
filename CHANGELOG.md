@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `meta` keys `src_xam` and `src_xai` pointing to the input XAM/XAI files
 - `src_xam` and `src_xai` will be set to `null` if multiple XAM per sample are provided, if files are hosted in S3 or if the files are altered by `ingress.nf`.
 
+### Changed
+- Compare only SQ SN,LN,M5 when determining if collection of XAM headers have been aligned to conflicting references.
+
 ### Fixed
 - Resumed workflow leading to mismatched (BAM, BAI) validateIndex pairs when calling `xam_ingress` more than once.
 - Broken Markdown rendering of install and run section of README in desktop application.
