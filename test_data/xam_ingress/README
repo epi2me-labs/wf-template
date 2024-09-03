@@ -122,3 +122,10 @@
     ├── reads0.bam
     ├── reads1.bam
     └── reads2.bam
+
+# case04 but the SQ lines are ordered correctly and feature different
+# SQ.UR tags that should not lead to a "Found mixed headers" error
+# See CW-4842
+├── case17
+│   ├── reads0.bam
+│   └── reads1.bam

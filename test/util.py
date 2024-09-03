@@ -245,7 +245,11 @@ def is_unaligned(path):
     first_sq_lines = None
     for target_file in target_files:
         with pysam.AlignmentFile(target_file, check_sq=False) as f:
-            sq_lines = f.header["SQ"]
+            sq_lines = [{
+                "SN": sq["SN"],
+                "LN": sq["LN"],
+                "M5": sq.get("M5"),
+            } for sq in f.header.get("SQ", [])]
         if first_sq_lines is None:
             # first file
             first_sq_lines = sq_lines
