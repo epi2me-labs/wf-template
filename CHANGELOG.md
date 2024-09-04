@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Compare only SQ SN,LN,M5 when determining if collection of XAM headers have been aligned to conflicting references.
+- Automatically emit the `igv.json` file upon generation.
 
 ### Fixed
 - Resumed workflow leading to mismatched (BAM, BAI) validateIndex pairs when calling `xam_ingress` more than once.
