@@ -4,10 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v5.2.4]
 ### Added
-- `meta` keys `src_xam` and `src_xai` pointing to the input XAM/XAI files
+- `meta` keys `src_xam` and `src_xai` pointing to the input XAM/XAI files.
 - `src_xam` and `src_xai` will be set to `null` if multiple XAM per sample are provided, if files are hosted in S3 or if the files are altered by `ingress.nf`.
+### Changed
+- Updated wf-common to sha4a766a8333dbb72086b117c6eefba08e8ef7d76e to improve report layouts in EPI2ME Desktop with ezCharts (v0.10.2).
 
 ### Changed
 - Compare only SQ SN,LN,M5 when determining if collection of XAM headers have been aligned to conflicting references.
