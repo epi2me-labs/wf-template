@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.2.5]
+### Changed
+- Updated wf-common to shae58638742cf84dbeeec683ba24bcdee67f64b986 fixing `SeqSummary` and `SeqCompare` plots in ezCharts (v0.11.0).
+
 ## [v5.2.4]
 ### Added
 - `meta` keys `src_xam` and `src_xai` pointing to the input XAM/XAI files.
