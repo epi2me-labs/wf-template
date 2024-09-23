@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Added
+- `reheader_samstream` script to be used to restore a XAM header when aligning a XAM with the `samtools bam2fq`->`minimap2` idiom.
+
 ## [v5.2.6]
 ### Changed
 - Updated wf-common to shad28e55140f75a68f59bbecc74e880aeab16ab158 improving legends and hovers for ezCharts plots (v0.11.2).
