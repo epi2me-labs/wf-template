@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- Collections of sorted XAM files eligible for merge will no longer be needlessly re-sorted before merge.
 ### Added
 - `reheader_samstream` script to be used to restore a XAM header when aligning a XAM with the `samtools bam2fq`->`minimap2` idiom.
 

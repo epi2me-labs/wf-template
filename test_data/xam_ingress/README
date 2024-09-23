@@ -129,3 +129,17 @@
 ├── case17
 │   ├── reads0.bam
 │   └── reads1.bam
+
+# case02 dir1, SO retained to check that sorting skipped for merge
+# See CW-4960
+├── case18
+│   ├── reads0.bam
+│   ├── reads1.bam
+│   └── reads2.bam
+
+# case02 dir1, BAMs collated to lose SO, to check files are sorted before merge
+# See CW-4960
+├── case19
+│   ├── reads0.bam
+│   ├── reads1.bam
+│   └── reads2.bam
