@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collections of sorted XAM files eligible for merge will no longer be needlessly re-sorted before merge.
 ### Added
 - `reheader_samstream` script to be used to restore a XAM header when aligning a XAM with the `samtools bam2fq`->`minimap2` idiom.
+### Changed
+- Supported multiple variation files for a single XAM file in `configure_igv`.
 
 ## [v5.2.6]
 ### Changed
