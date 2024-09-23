@@ -87,6 +87,8 @@ docker-run:
                 "xam-case15", "xam-case15-s3",
                 "xam-case16", "xam-case16-s3",
                 "xam-case17", "xam-case17-s3",
+                "xam-case18", "xam-case18-s3",
+                "xam-case19", "xam-case19-s3",
               ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -589,3 +591,23 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case17"
               AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case17/ bam $$PWD/$$CI_PROJECT_NAME
+
+
+        - if: $MATRIX_NAME == "xam-case18"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case18"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case18/ bam $$PWD/$$CI_PROJECT_NAME; grep -v "sortBam" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
+        - if: $MATRIX_NAME == "xam-case18-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case18"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case18/ bam $$PWD/$$CI_PROJECT_NAME; grep -v "sortBam" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
+
+
+        - if: $MATRIX_NAME == "xam-case19"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case19"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case19/ bam $$PWD/$$CI_PROJECT_NAME; grep "sortBam" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
+        - if: $MATRIX_NAME == "xam-case19-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case19"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case19/ bam $$PWD/$$CI_PROJECT_NAME; grep -v "sortBam" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
