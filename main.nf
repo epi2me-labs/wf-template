@@ -23,6 +23,9 @@ OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
 process getVersions {
     label "wftemplate"
+    // Note that some wfs can modify this file to add other tools' version.
+    // Add the publishDir directive in the latest one.
+    publishDir "${params.out_dir}", mode: 'copy', pattern: "versions.txt"
     cpus 1
     output:
         path "versions.txt"
@@ -36,6 +39,7 @@ process getVersions {
 
 process makeReport {
     label "wftemplate"
+    publishDir "${params.out_dir}", mode: 'copy', pattern: "wf-template*-report.html"
     input:
         // `analysis_group` can be `null`
         tuple val(analysis_group), val(metadata), path(stats, stageAs: "stats_*")
@@ -65,12 +69,13 @@ process makeReport {
     """
 }
 
-
+// Use publishDir when possible in the process but this is for when is needed output
+// different files. E.g.: outputs from ingress processes or inputs provided by the user.
 // See https://github.com/nextflow-io/nextflow/issues/1636. This is the only way to
 // publish files from a workflow whilst decoupling the publish from the process steps.
 // The process takes a tuple containing the filename and the name of a sub-directory to
 // put the file into. If the latter is `null`, puts it into the top-level directory.
-process output {
+process publish {
     // publish inputs to output directory
     label "wftemplate"
     publishDir (
@@ -83,6 +88,7 @@ process output {
     output:
         path fname
     """
+    echo "Writing output files"
     """
 }
 
@@ -156,7 +162,7 @@ workflow pipeline {
 
         // replace `null` with path to optional file
         reads
-        | map { 
+        | map {
             meta, path, index, stats ->
             [ meta, path ?: OPTIONAL_FILE, index ?: OPTIONAL_FILE, stats ?: OPTIONAL_FILE ]
         }
@@ -164,7 +170,6 @@ workflow pipeline {
     emit:
         ingress_results = collectIngressResultsInDir.out
         report
-        workflow_params
         // TODO: use something more useful as telemetry
         telemetry = workflow_params
 }
@@ -237,12 +242,10 @@ workflow {
     }
 
     pipeline(decorate_samples)
-    pipeline.out.ingress_results
+    ch_to_publish = pipeline.out.ingress_results
         | map { [it, "${params.fastq ? "fastq" : "xam"}_ingress_results"] }
-        | concat (
-            pipeline.out.report.concat(pipeline.out.workflow_params)
-                | map { [it, null] })
-        | output
+
+    ch_to_publish | publish
 }
 
 workflow.onComplete {
