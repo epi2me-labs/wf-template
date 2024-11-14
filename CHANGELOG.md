@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v5.3.1]
 ### Changed
 - Datamodel-codegen now uses subclasses in Enum classes.
+- Rename output process to publish and use publishDir if possible [CW-4137]
 
 ## [v5.3.0]
 ### Fixed
