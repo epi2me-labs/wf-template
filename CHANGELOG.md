@@ -6,12 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ### Changed
-- Corrected permissions for non-executable workflow_glue files in bin/
+- Corrected permissions for non-executable workflow_glue files in bin/.
+### Added
+- No caching for getParams process.
 
 ## [v5.3.1]
 ### Changed
 - Datamodel-codegen now uses subclasses in Enum classes.
-- Rename output process to publish and use publishDir if possible [CW-4137]
+- Rename output process to publish and use publishDir if possible [CW-4137].
 
 ## [v5.3.0]
 ### Fixed
