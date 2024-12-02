@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[Unreleased]
+## [v5.3.2]
 ### Changed
 - Corrected permissions for non-executable workflow_glue files in bin/.
-### Added
-- No caching for getParams process.
+- Updated wf-common to shaf15f9d80aba72c20e3e71f84869619873a56b8af to improve the performance of bamstats as provided by fastcat v0.19.1.
+### Fixed
+- getParams process cache can lead to incorrect parameter table in report if workflow is run with -resume under different conditions.
 
 ## [v5.3.1]
 ### Changed
