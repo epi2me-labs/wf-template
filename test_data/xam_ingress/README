@@ -143,3 +143,8 @@
 │   ├── reads0.bam
 │   ├── reads1.bam
 │   └── reads2.bam
+
+
+# Case20: BAM from SAM with just a header
+├── case20
+│   ├── just_header.bam

@@ -246,3 +246,11 @@
 ├── case22
 │   ├── reads0.fastq
 │   └── reads1.fastq
+
+# take empty fastq
+├── case23
+│   ├── empty.fq
+
+# take empty fastq
+├── case24
+│   ├── empty.fq.gz  # (gzip)
