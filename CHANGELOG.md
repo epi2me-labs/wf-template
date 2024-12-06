@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v5.3.3]
+### Fixed
+- Fixed regression in handling empty FASTQ files by updating wf-common to shabadd33adae761be6f2d59c6ecfb44b19cf472cfc to use fastcat v0.20.0
+
 ## [v5.3.2]
 ### Changed
 - Corrected permissions for non-executable workflow_glue files in bin/.
