@@ -181,11 +181,6 @@ workflow {
 
     Pinguscript.ping_start(nextflow, workflow, params)
 
-    // demo mutateParam
-    if (params.containsKey("mutate_fastq")) {
-        CWUtil.mutateParam(params, "fastq", params.mutate_fastq)
-    }
-
     def samples
     if (params.fastq) {
         samples = fastq_ingress([

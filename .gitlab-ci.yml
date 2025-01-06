@@ -59,7 +59,6 @@ docker-run:
                 "case22",
                 "case22-allow_multiple_basecall_models",
                 "case23-empty_fastq", "case24-empty_fastq_gz",
-                "mutateParams",
                 "xam-single-file", "xam-single-file-s3",
                 "xam-case01", "xam-case01-s3",
                 "xam-case02", "xam-case02-s3",
@@ -91,6 +90,7 @@ docker-run:
                 "xam-case18", "xam-case18-s3",
                 "xam-case19", "xam-case19-s3",
                 "xam-case20",
+                "unexpected-params"
               ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -366,10 +366,6 @@ docker-run:
             AFTER_NEXTFLOW_CMD: >
               $TEST_CMD test_data/fastq_ingress/case24 fastq $$PWD/$$CI_PROJECT_NAME
 
-        - if: $MATRIX_NAME == "mutateParams"
-          variables:
-              NF_WORKFLOW_OPTS: "--fastq no_reads.gz --mutate_fastq test_data/reads.fastq.gz"
-
         # now the cases for xam_ingress
         - if: $MATRIX_NAME == "xam-single-file"
           variables:
@@ -628,4 +624,10 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case20"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case20/ bam $$PWD/$$CI_PROJECT_NAME;
+        
+        - if: $MATRIX_NAME == "unexpected-params"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz --is_this_param_expected no"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Found unexpected parameters:"
 
