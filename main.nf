@@ -38,7 +38,7 @@ process getVersions {
 
 
 process makeReport {
-    label "wftemplate"
+    label "wf_common"
     publishDir "${params.out_dir}", mode: 'copy', pattern: "wf-template*-report.html"
     input:
         // `analysis_group` can be `null`
