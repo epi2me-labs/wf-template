@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Added `.DS_store` to `.gitignore` to prevent EPI2ME Desktop users on MacOS dirtying workflow git directories.
+- Input file paths can contain single quotes.
 ### Changed
 - Use wf-common in makeReport.
 - Unexpected workflow parameters now cause the workflow to fail.

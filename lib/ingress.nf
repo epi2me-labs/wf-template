@@ -576,7 +576,7 @@ process fastcat {
 
     # Save file as compressed fastq
     fastcat \
-        -s ${meta["alias"]} \
+        -s '${meta["alias"].replaceAll("'","'\\\\''")}' \
         -f fastcat_stats/per-file-stats.tsv \
         -i fastcat_stats/per-file-runids.tsv \
         -l fastcat_stats/per-file-basecallers.tsv \
