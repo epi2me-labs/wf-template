@@ -59,6 +59,7 @@ docker-run:
                 "case22",
                 "case22-allow_multiple_basecall_models",
                 "case23-empty_fastq", "case24-empty_fastq_gz",
+                "case25",
                 "xam-single-file", "xam-single-file-s3",
                 "xam-case01", "xam-case01-s3",
                 "xam-case02", "xam-case02-s3",
@@ -365,6 +366,11 @@ docker-run:
             NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case24/"
             AFTER_NEXTFLOW_CMD: >
               $TEST_CMD test_data/fastq_ingress/case24 fastq $$PWD/$$CI_PROJECT_NAME
+        - if: $MATRIX_NAME == "case25"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case\\'25/"
+            AFTER_NEXTFLOW_CMD: >
+              $TEST_CMD test_data/fastq_ingress/case\'25 fastq $$PWD/$$CI_PROJECT_NAME
 
         # now the cases for xam_ingress
         - if: $MATRIX_NAME == "xam-single-file"

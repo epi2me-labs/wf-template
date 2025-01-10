@@ -254,3 +254,7 @@
 # take empty fastq
 ├── case24
 │   ├── empty.fq.gz  # (gzip)
+
+# Single quotes in directory and file name
+├── case'25
+│   ├── reads'01.fastq

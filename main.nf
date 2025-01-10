@@ -52,7 +52,7 @@ process makeReport {
     script:
         String report_name = analysis_group ? \
             "wf-template-$analysis_group-report.html" : "wf-template-report.html"
-        String metadata = new JsonBuilder(metadata).toPrettyString()
+        String metadata = new JsonBuilder(metadata).toPrettyString().replaceAll("'", "'\\\\''")
         String group_arg = analysis_group ? "--analysis_group $analysis_group" : ""
         String stats_args = stats ? "--stats $stats" : ""
         String client_fields_args = client_fields.name == OPTIONAL_FILE.name ? "" : "--client_fields $client_fields"
@@ -108,15 +108,15 @@ process collectIngressResultsInDir {
         // being `reads` or `stats`)
         path "out/*"
     script:
-    String outdir = "out/${meta["alias"]}"
-    String metaJson = new JsonBuilder(meta).toPrettyString()
+    String outdir = "out/${meta["alias"].replaceAll("'", "'\\\\''")}"
+    String metaJson = new JsonBuilder(meta).toPrettyString().replaceAll("'", "'\\\\''")
     String reads = reads.fileName.name == OPTIONAL_FILE.name ? "" : reads
     String index = index.fileName.name == OPTIONAL_FILE.name ? "" : index
     String stats = stats.fileName.name == OPTIONAL_FILE.name ? "" : stats
     """
-    mkdir -p $outdir
+    mkdir -p '$outdir'
     echo '$metaJson' > metamap.json
-    mv metamap.json $reads $stats $index $outdir
+    mv metamap.json $reads $stats $index '$outdir'
     """
 }
 
