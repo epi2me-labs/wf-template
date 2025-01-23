@@ -1,1 +1,0 @@
-Nextflow workflow template repository.
