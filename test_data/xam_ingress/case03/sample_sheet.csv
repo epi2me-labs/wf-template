@@ -1,4 +1,0 @@
-barcode,alias,type
-barcode01,sample1,positive_control
-barcode02,sample2,test_sample
-barcode04,sample4,no_template_control
