@@ -94,7 +94,7 @@
             "properties": {
                 "out_dir": {
                     "type": "string",
-                    "default": "output",
+                    "default": "./results",
                     "format": "directory-path",
                     "description": "Directory for output of all workflow results."
                 }
