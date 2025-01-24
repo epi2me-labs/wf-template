@@ -18,7 +18,7 @@ process NANOPLOT {
 	script:
 	"""
 	mkdir nanoplot_logs
-	NanoPlot --fastq ${reads_file} --outdir nanoplot_logs --threads 4 --loglength
+	NanoPlot --fastq ${reads_file} --outdir nanoplot_logs --threads $params.threads --loglength
 
 	cat <<-END_VERSIONS > versions.yml
     "${task.process}":
