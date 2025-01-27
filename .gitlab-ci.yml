@@ -91,6 +91,17 @@ docker-run:
                 "xam-case18", "xam-case18-s3",
                 "xam-case19", "xam-case19-s3",
                 "xam-case20",
+                "xam-case21-exp-no-files",
+                "xam-case21-exp-single-file",
+                "xam-case21-exp-spurious-level",
+                "xam-case22-barcode-name",
+                "xam-case22-barcode-sheet",
+                "xam-case22-barcode-sheet-name",
+                "xam-case22-barcode-sheet-sample-notindir",
+                "xam-case22-barcode-no-sheet",
+                "xam-case22-barcode-sheet-incl-fail",
+                "xam-case22-barcode-sheet-incl-unclassified",
+                "xam-case22-barcode-sheet-incl-all", "s3-xam-case22-barcode-sheet-incl-all",
                 "unexpected-params"
               ]
     rules:
@@ -166,12 +177,12 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case03"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain target files (ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz') and also sub-directories with such files."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "All files in the input folder must be at the same folder level. Please reorganise and try again."
         - if: $MATRIX_NAME == "case03-s3"
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case03"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain target files (ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz') and also sub-directories with such files."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "All files in the input folder must be at the same folder level. Please reorganise and try again."
 
         - if: $MATRIX_NAME == "case04"
           variables:
@@ -239,12 +250,12 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case10"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain more than one level of sub-directories with target files (ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz')."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "All files in the input folder must be at the same folder level. Please reorganise and try again."
         - if: $MATRIX_NAME == "case10-s3"
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case10"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' cannot contain more than one level of sub-directories with target files (ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz')."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "All files in the input folder must be at the same folder level. Please reorganise and try again."
 
         - if: $MATRIX_NAME == "case11"
           variables:
@@ -261,12 +272,12 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case12"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' must contain either target files (ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz') or sub-directories containing such files."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "No valid files ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz' found in input folder '.*'."
         - if: $MATRIX_NAME == "case12-s3"
           variables:
               NF_WORKFLOW_OPTS: "--fastq $S3_TEST_DATA/fastq_ingress/case12"
               ASSERT_NEXTFLOW_FAILURE: "1"
-              ASSERT_NEXTFLOW_FAILURE_REXP: "Input directory '.*' must contain either target files (ending in .*) or sub-directories containing such files (no more than one layer deep)."
+              ASSERT_NEXTFLOW_FAILURE_REXP: "No valid files ending in '.fastq' / '.fastq.gz' / '.fq' / '.fq.gz' found in input folder '.*'."
         - if: $MATRIX_NAME == "case12-unclassified"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case12 --analyse_unclassified"
@@ -438,19 +449,19 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
-                && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
+                && grep "Ignoring barcode03: Found in input folder but sample sheet has no such entry." .nextflow.log
         - if: $MATRIX_NAME == "xam-case03-keep_unaligned-sample_sheet"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --wf.keep_unaligned"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
-                && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
+                && grep "Ignoring barcode03: Found in input folder but sample sheet has no such entry." .nextflow.log
         - if: $MATRIX_NAME == "xam-case03-keep_unaligned-sample_sheet-return_fastq"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03 --sample_sheet test_data/xam_ingress/case03/sample_sheet.csv --wf.keep_unaligned --wf.return_fastq"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/xam_ingress/case03 bam $$PWD/$$CI_PROJECT_NAME
-                && grep "Input directory 'barcode03' was found, but sample sheet '.*' has no such entry." .nextflow.log
+                && grep "Ignoring barcode03: Found in input folder but sample sheet has no such entry." .nextflow.log
         - if: $MATRIX_NAME == "xam-case03-barcode02"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case03/barcode02"
@@ -626,11 +637,79 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case19"
               AFTER_NEXTFLOW_CMD: $TEST_CMD ${S3_TEST_DATA}/xam_ingress/case19/ bam $$PWD/$$CI_PROJECT_NAME; grep -v "sortBam" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
 
+
         - if: $MATRIX_NAME == "xam-case20"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case20"
               AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case20/ bam $$PWD/$$CI_PROJECT_NAME;
-        
+
+
+        - if: $MATRIX_NAME == "xam-case21-excl-unclassified"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case21"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "No valid files ending in '.bam' / '.ubam' found in input folder '.*'."
+        # checks unclassified reads are processed appropriately
+        # also neatly checks everything still works with a single BAM file in a dir structure
+        - if: $MATRIX_NAME == "xam-case21-incl-unclassified"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case21 --analyse_unclassified --sample unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case21/ bam $$PWD/$$CI_PROJECT_NAME;
+        - if: $MATRIX_NAME == "xam-case21-spurious-level"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case21 --analyse_unclassified --analyse_fail"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "All files in the input folder must be at the same folder level. Please reorganise and try again."
+
+
+        # case 22 use sample sheet
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 22 use sample name
+        - if: $MATRIX_NAME == "xam-case22-barcode-name"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample barcode01"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 22 use sample sheet and override with sample name
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-name"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample barcode01 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 22 target sample ignored as not in dir
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-sample-notindir"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet_sample_notindir.csv"
+              AFTER_NEXTFLOW_CMD: >
+                  $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME
+                  && grep "Ignoring barcode13: Found in sample sheet but sample was not found in the input folder." .nextflow.log
+        # case 22 missing sample name and sheet
+        - if: $MATRIX_NAME == "xam-case22-barcode-no-sheet"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Sample sheet or sample name must be provided."
+        # case 22 use barcoded sample sheet include fail
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-fail"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv --analyse_fail"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 22 use barcoded sample sheet include unclassified
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-unclassified"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case22 use barcoded sample sheet, include fail and unclassified
+        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-all"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv --analyse_fail --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+        - if: $MATRIX_NAME == "s3-xam-case22-barcode-sheet-incl-all"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case22 --sample_sheet ${S3_TEST_DATA}/xam_ingress/case22/sample_sheet.csv --analyse_fail --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD -s $S3_TEST_DATA/xam_ingress/case22/sample_sheet.csv ${S3_TEST_DATA}/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+
         - if: $MATRIX_NAME == "unexpected-params"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz --is_this_param_expected no"

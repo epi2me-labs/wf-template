@@ -1,18 +1,101 @@
-<!---Example of input directory structure, delete and edit as appropriate per workflow.--->
+<!---Example of input folder structure, delete and edit as appropriate per workflow.--->
 This workflow accepts either FASTQ or BAM files as input.
 
-The FASTQ or BAM input parameters for this workflow accept one of three cases: (i) the path to a single FASTQ or BAM file; (ii) the path to a top-level directory containing FASTQ or BAM files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ or BAM files. In the first and second cases (i and ii), a sample name can be supplied with `--sample`. In the last case (iii), the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`.
+
+### Single file
+
+A single FASTQ or BAM file can be provided to ingress and will be analysed by the workflow.
+A sample name can optionally be supplied with the `sample` option, otherwise the file name before any file extensions will be used.
+
+### Single folder containing files
+
+A single folder containing FASTQ or BAM files can be provided to ingress.
+The workflow will merge these files together and analyse them as one sample.
+
+A sample name can optionally be supplied with the `sample` option, otherwise the folder name will be used.
 
 ```
-(i)                     (ii)                 (iii)    
-input_reads.fastq   ─── input_directory  ─── input_directory
-                        ├── reads0.fastq     ├── barcode01
-                        └── reads1.fastq     │   ├── reads0.fastq
-                                             │   └── reads1.fastq
-                                             ├── barcode02
-                                             │   ├── reads0.fastq
-                                             │   ├── reads1.fastq
-                                             │   └── reads2.fastq
-                                             └── barcode03
-                                              └── reads0.fastq
+─── input_folder
+    ├── reads0.fastq
+    └── reads1.fastq
 ```
+
+### Multiple folders containing files
+
+A folder containing one level of sub-folders which in turn contain FASTQ or BAM files.
+The anticipated use case here is for demultiplexed barcodes.
+
+```
+─── input_folder
+    ├── barcode01
+    │   ├── reads0.fastq
+    │   └── reads1.fastq
+    ├── barcode02
+    │   ├── reads0.fastq
+    │   ├── reads1.fastq
+    │   └── reads2.fastq
+    ├── barcode03
+    │   └── reads0.fastq
+    └── unclassified
+        └── reads0.fastq
+```
+
+The names of the folders will be used as the names of each multiplexed sample.
+The workflow will merge all files found inside each of the sub-folders into distinct samples for analysis.
+The folders may have any name, however folders named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on.
+
+
+### Multiple folders containing MinKNOW sample folders
+
+A folder containing more than one level of folders.
+The anticipated use case here is for analysing a MinKNOW experiment folder.
+
+```
+─── input_folder
+    ├── sample01
+    │   ├── YYYYMMDD_HHMM_0A_FLO00000_00000000
+    │   │   ├── bam_pass
+    │   │   │   ├── reads0.bam
+    │   │   │   └── reads1.bam
+    │   │   └── bam_fail
+    │   │       └── reads0.bam
+    │   ├── YYYYMMDD_HHMM_0B_FLO11111_11111111
+    │   │   ├── bam_pass
+    │   │   │   └── reads0.bam
+    │   │   └── bam_fail
+    └── sample02
+        └── YYYYMMDD_HHMM_0C_FLO22222_22222222
+            ├── bam_pass
+            │   └── reads0.bam
+            └── bam_fail
+                └── reads0.bam
+```
+
+The names of the first-level sub-folders will be used as the names of each multiplexed sample.
+Files must appear at the same level in the file tree.
+The workflow will recursively merge all files found inside each of the first-level sub-folders into distinct samples for analysis.
+
+All the files in the example above have a depth of four; and so will be analysed by the workflow.
+It would be an error to place files in other levels, for example below `bad_sample01` has files at a depth of four and `bad_sample02` has files at a depth of two:
+
+```
+─── bad_input_folder
+    ├── bad_sample01
+    │   └── YYYYMMDD_HHMM_0A_FLO00000_00000000
+    │       └── bam_pass
+    │           ├── reads0.bam
+    │           └── reads1.bam
+    └── bad_sample02
+        └── reads0.bam
+```
+
+To ensure the workflow will analyse the intended samples you must indicate to the workflow the samples to analyse in one of three ways:
+* `sample_sheet`: A sample sheet describing samples in the input folder to be processed. The folder names must match the barcodes or sample aliases as specified in the sample sheet.
+* `sample`: A single sample name that matches one of the sample folders in the input folder.
+* Both `sample_sheet` and `sample`: This will consume all metadata from the sample sheet but limit analysis to the single named sample.
+
+Additionally, the following rules apply when ingress is searching for files to be analysed by the workflow:
+* Sub-folders beyond the first-level named `pod5_fail`, `fastq_fail` and `bam_fail` will be ignored by ingress unless the  `analyse_fail` option is switched on.
+* Sub-folders beyond the first-level named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on. It is not possible to name a sample `unclassified` using the sample sheet.
+* It is an error to provide folders matching both the barcode and alias for a sample's row in the sample sheet.
+

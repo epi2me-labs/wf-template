@@ -144,7 +144,60 @@
 │   ├── reads1.bam
 │   └── reads2.bam
 
-
 # Case20: BAM from SAM with just a header
 ├── case20
 │   ├── just_header.bam
+
+# experiment layout [CW-4785]
+# xam-case21-exp-no-files: Check case where no files are ingested.
+# xam-case21-exp-single-file: Check single BAM in nested layout
+# xam-case21-exp-spurious-level: Provide invalid directory layout, check error message.
+case21
+└── unclassified
+    ├── bam_fail
+    │   └── spurious_dir
+    │       └── reads0.bam
+    └── bam_pass
+        └── reads0.bam
+
+# xam-case22-barcode-name: Provide valid sample name, ingest single sample.
+# xam-case22-barcode-sheet: Provide valid sample sheet, ingest all samples.
+# xam-case22-barcode-sheet-name: Provide valid sample sheet and valid sample name, check that sample is ingressed with sample sheet metadata.
+# xam-case22-barcode-sheet-sample-notindir: Provide sample sheet for sample that is not in ingress directory, check workflow completes, ingests nothing. Check warning is emitted that sample could not be found.
+# xam-case22-barcode-no-sheet: Provide no sample sheet or sample name, check workflow fails with error message
+# xam-case22-barcode-sheet-incl-fail: Provide valid sample sheet, ingest all samples, ingest failed
+# xam-case22-barcode-sheet-incl-unclassified: Provide valid sample sheet, ingest all samples, ingest unclassified
+# xam-case22-barcode-sheet-incl-all: Provide valid sample sheet, ingest all samples, ingest unclassified and failed
+case22
+├── barcode01
+│   ├── YYYYMMDD_HHMM_0A_FLO00000_00000000
+│   │   ├── bam_fail
+│   │   │   └── reads0.bam
+│   │   └── bam_pass
+│   │       └── reads0.bam
+│   ├── YYYYMMDD_HHMM_0B_FLO11111_11111111
+│   │   ├── bam_fail
+│   │   │   └── reads1.bam
+│   │   └── bam_pass
+│   │       └── reads1.bam
+│   └── YYYYMMDD_HHMM_0C_FLO22222_22222222
+│       ├── bam_fail
+│       │   └── reads2.bam
+│       └── bam_pass
+│           └── reads2.bam
+├── barcode02
+│   ├── YYYYMMDD_HHMM_1A_FLO33333_00000000
+│   │   └── bam_pass
+│   │       └── reads0.bam
+│   ├── YYYYMMDD_HHMM_1B_FLO44444_11111111
+│   │   └── bam_pass
+│   │       └── reads1.bam
+│   └── YYYYMMDD_HHMM_1C_FLO55555_22222222
+│       └── bam_pass
+│           └── reads2.bam
+├── sample_sheet.csv
+├── sample_sheet_sample_notindir.csv
+└── unclassified
+    └── YYYYMMDD_HHMM_2A_FLO66666_00000000
+        └── bam_pass
+            └── reads0.bam

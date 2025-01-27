@@ -139,6 +139,7 @@ def test_names_run_ids_and_basecallers(prepare):
             ingress_results_dir / meta["alias"] / res_seqs_fname,
             output_type,
             output_type,
+            params,
         )
 
         # now collect the entries from the individual input files
@@ -146,7 +147,13 @@ def test_names_run_ids_and_basecallers(prepare):
         exp_run_ids = []
         exp_basecallers = []
         target_files = (
-            util.get_target_files(path, input_type=input_type)
+            util.get_target_files(
+                path,
+                input_type=input_type,
+                recursive=True,
+                analyse_fail=params["analyse_fail"],
+                analyse_unclassified=params["analyse_unclassified"],
+            )
             if path.is_dir()
             else [path]
         )
@@ -154,10 +161,10 @@ def test_names_run_ids_and_basecallers(prepare):
             if (
                 input_type == "bam"
                 and not params["wf"]["keep_unaligned"]
-                and util.is_unaligned(file)
+                and util.is_unaligned(file, params)
             ):
                 continue
-            curr_entries = util.create_preliminary_meta(file, input_type, output_type)
+            curr_entries = util.create_preliminary_meta(file, input_type, output_type, params)
             exp_read_names += curr_entries["names"]
             exp_run_ids += curr_entries["run_ids"]
             exp_basecallers += curr_entries["basecall_models"]
