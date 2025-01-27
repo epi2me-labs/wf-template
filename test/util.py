@@ -42,12 +42,28 @@ def is_target_file(file, input_type):
     return any(map(lambda ext: file.name.endswith(ext), exts))
 
 
-def get_target_files(path, input_type):
+def get_target_files(path, input_type, recursive=False, analyse_unclassified=False, analyse_fail=False):
     """Return a list of target files in the directory."""
-    return list(filter(lambda file: is_target_file(file, input_type), path.iterdir()))
+    if recursive:
+        target_files = []
+
+        if path.is_dir():
+            if path.name == "unclassified" and not analyse_unclassified:
+                return []
+            if (path.name == "bam_fail" or path.name == "fastq_fail") and not analyse_fail:
+                return []
+
+        for p in path.iterdir():
+            if p.is_dir():
+                target_files.extend(get_target_files(p, input_type, recursive=True, analyse_unclassified=analyse_unclassified, analyse_fail=analyse_fail))
+            elif is_target_file(p, input_type):
+                target_files.append(p)
+        return target_files
+    else:
+        return list(filter(lambda f: is_target_file(f, input_type), path.iterdir()))
 
 
-def create_preliminary_meta(path, input_type, output_type):
+def create_preliminary_meta(path, input_type, output_type, params=None):
     """Create a dict of sequence IDs / names and run_ids.
 
     :param path: can be a single target file, a list of target files, or a directory
@@ -59,13 +75,20 @@ def create_preliminary_meta(path, input_type, output_type):
     For FASTQ files, the run IDs can be present in the header lines in the format
     `runid=...` or `RD:Z:...`. If both are present, an error is thrown.
     """
+    if params is None:
+        params = {}
+
     check_input_type(input_type)
     names = []
     run_ids = set()
     if isinstance(path, list):
         target_files = path
     elif path.is_dir():
-        target_files = get_target_files(path, input_type)
+        target_files = get_target_files(
+            path, input_type, recursive=True,
+            analyse_unclassified=params.get("analyse_unclassified", False),
+            analyse_fail=params.get("analyse_fail", False),
+        )
     elif path.is_file():
         target_files = [path]
     else:
@@ -124,7 +147,7 @@ def create_preliminary_meta(path, input_type, output_type):
                     if basecall_model is not None:
                         basecall_models.add(basecall_model)
         else:
-            unaligned = is_unaligned(file)
+            unaligned = is_unaligned(file, params)
             with pysam.AlignmentFile(file, check_sq=False) as f:
                 xam_sorted = f.header.get('HD', {}).get('SO') == 'coordinate'
                 # Check if the data are aligned
@@ -227,7 +250,8 @@ def create_metadict(**kwargs):
     return defaults
 
 
-def is_unaligned(path):
+#TODO This is gross
+def is_unaligned(path, params):
     """Check if uBAM.
 
     When a single file, checks if there are `@SQ` lines in the header. When a directory,
@@ -238,7 +262,10 @@ def is_unaligned(path):
     if path.is_file():
         target_files = [path]
     elif path.is_dir():
-        target_files = get_target_files(path, "bam")
+        target_files = get_target_files(path, "bam", recursive=True,
+            analyse_unclassified=params.get("analyse_unclassified", False),
+            analyse_fail=params.get("analyse_fail", False),
+        )
     else:
         raise ValueError("`path` is neither file nor directory.")
 
@@ -277,6 +304,7 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
             input_path,
             input_type,
             output_type,
+            params,
         )
         del prel_meta['names']
         meta = create_metadict(
@@ -288,11 +316,13 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
         valid_inputs.append([meta, input_path])
     else:
         # is a directory --> check if target files in top-level dir or in sub-dirs
-        top_dir_target_files = get_target_files(input_path, input_type)
+        top_dir_target_files = get_target_files(input_path, input_type, analyse_fail=params["analyse_fail"], analyse_unclassified=params["analyse_unclassified"])
         subdirs_with_target_files = [
             x
             for x in input_path.iterdir()
-            if x.is_dir() and get_target_files(x, input_type)
+            if x.is_dir() and get_target_files(
+                x, input_type, recursive=True, analyse_fail=params["analyse_fail"], analyse_unclassified=params["analyse_unclassified"]
+            )
         ]
         if top_dir_target_files and subdirs_with_target_files:
             raise ValueError(
@@ -312,6 +342,7 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
                 top_dir_target_files,
                 input_type,
                 output_type,
+                params,
             )
 
             del prel_meta['names']
@@ -325,24 +356,12 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
         else:
             # iterate over the sub-directories
             for subdir in subdirs_with_target_files:
-                # make sure we don't have sub-sub-directories containing target files
-                if any(
-                    get_target_files(x, input_type)
-                    for x in subdir.iterdir()
-                    if x.is_dir()
-                ):
-                    raise ValueError(
-                        f"Input directory '{input_path}' cannot contain more than one "
-                        f"level of sub-directories with {input_type.upper()} files."
-                    )
-                # handle unclassified
-                if subdir.name == "unclassified" and not params["analyse_unclassified"]:
-                    continue
                 # get the run IDs of all files
                 prel_meta = create_preliminary_meta(
                     subdir,
                     input_type,
                     output_type,
+                    params,
                 )
                 del prel_meta['names']
                 barcode = subdir.name
@@ -384,6 +403,16 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
                         meta, path = {}, None
                     meta.update(dict(sample_sheet_entry))
                     valid_inputs.append([create_metadict(**dict(meta)), path])
+
+            # finally handle case where sample name is provided
+            # this will filter samples regardless of whether the sample sheet is provided
+            user_sample = params.get("sample")
+            if user_sample is not None:
+                valid_inputs = [
+                    vi for vi in valid_inputs
+                    if vi[0]["barcode"] == user_sample
+                ]
+
     # Finally, in case of XAM, loop over the valid inputs again and check if
     # they are uBAM. If so and not `keep_unaligned`, set the path to `None` and
     # the run IDs to `[]`.
@@ -391,7 +420,7 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
         valid_inputs_tmp = []
         for meta, path in valid_inputs:
             if path is not None:
-                meta["is_unaligned"] = is_unaligned(path)
+                meta["is_unaligned"] = is_unaligned(path, params)
                 if meta.get("is_unaligned") and not params["wf"]["keep_unaligned"]:
                     path = None
                     meta["run_ids"] = []
