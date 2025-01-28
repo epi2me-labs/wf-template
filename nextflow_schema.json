@@ -39,7 +39,7 @@
                     "type": "boolean",
                     "default": false,
                     "title": "Analyse reads marked as failed QC by the basecaller.",
-                    "description": "Analyse failed reads from input folder. By default the workflow will not process reads in a pod5_fail, bam_fail or fastq_fail sub-folder.",
+                    "description": "Analyse failed reads from input folder. By default the workflow will not process reads in a pod5_fail, bam_fail or fastq_fail sub-folders.",
                     "help_text": "If selected and if the input is a multiplex folder the workflow will also process pod5_fail, bam_fail and fastq_fail folders."
                 },
                 "watch_path": {

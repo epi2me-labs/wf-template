@@ -1,5 +1,5 @@
 barcode,alias,type
 barcode01,sample1,test_sample
-barcode02,barcode02,test_sample
-barcode05,barcode05,test_sample
-barcode07,barcode07,test_sample
+barcode02,sample2,test_sample
+barcode05,sample5,test_sample
+barcode07,sample7,test_sample

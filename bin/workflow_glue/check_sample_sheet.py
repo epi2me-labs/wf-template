@@ -106,6 +106,13 @@ def main(args):
             sys.stdout.write("values in 'barcode' column are incorrect format")
             sys.exit()
 
+    # check aliases are correct format
+    # for now we have decided they may not start with "barcode"
+    for alias in aliases:
+        if alias.startswith("barcode"):
+            sys.stdout.write("values in 'alias' column must not begin with 'barcode'")
+            sys.exit()
+
     # check barcodes are all the same length
     first_length = len(barcodes[0])
     for barcode in barcodes[1:]:

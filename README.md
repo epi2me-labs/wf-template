@@ -155,10 +155,11 @@ The workflow will merge all files found inside each of the sub-folders into dist
 The folders may have any name, however folders named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on.
 
 
-### Multiple folders containing MinKNOW sample folders
+### Multiple folders containing MinKNOW sample folders with BAM files
 
 A folder containing more than one level of folders.
-The anticipated use case here is for analysing a MinKNOW experiment folder.
+The anticipated use case here is for analysing a MinKNOW experiment folder where the output format is BAM files.
+FASTQ files are not supported in this layout at this time.
 
 ```
 ─── input_folder
@@ -208,6 +209,7 @@ Additionally, the following rules apply when ingress is searching for files to b
 * Sub-folders beyond the first-level named `pod5_fail`, `fastq_fail` and `bam_fail` will be ignored by ingress unless the  `analyse_fail` option is switched on.
 * Sub-folders beyond the first-level named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on. It is not possible to name a sample `unclassified` using the sample sheet.
 * It is an error to provide folders matching both the barcode and alias for a sample's row in the sample sheet.
+* Is is an error to provide a sample sheet where a sample alias begins with the word "barcode".
 
 
 
@@ -222,7 +224,7 @@ Additionally, the following rules apply when ingress is searching for files to b
 | fastq | string | FASTQ files to use in the analysis. | This accepts one of four cases: (i) the path to a single FASTQ file; (ii) the path to a folder containing FASTQ files; (iii) the path to a folder containing one level of sub-folders which in turn contain FASTQ files; (iv) the path to a MinKNOW experiment folder containing sub-folders for each sequenced sample. In the first and second case, a sample name can be supplied with `--sample`. In the third case, the data is assumed to be multiplexed with the names of the sub-folders as barcodes, and a sample sheet can be provided with `--sample_sheet`. In the fourth case, the data is assumed to be multiplexed with the names of the sub-folders as samples, and a sample sheet and/or sample name must be provided to indicate which samples to analyse. |  |
 | bam | string | BAM or unaligned BAM (uBAM) files to use in the analysis. | This accepts one of four cases: (i) the path to a single BAM file; (ii) the path to a folder containing BAM files; (iii) the path to a folder containing one level of sub-folders which in turn contain BAM files; (iv) the path to a MinKNOW experiment folder containing sub-folders for each sequenced sample. In the first and second case, a sample name can be supplied with `--sample`. In the third case, the data is assumed to be multiplexed with the names of the sub-folders as barcodes, and a sample sheet can be provided with `--sample_sheet`. In the fourth case, the data is assumed to be multiplexed with the names of the sub-folders as samples, and a sample sheet and/or sample name must be provided to indicate which samples to analyse. |  |
 | analyse_unclassified | boolean | Analyse unclassified reads from input folder. By default the workflow will not process reads in the unclassified folder. | If selected and if the input is a multiplex folder the workflow will also process the unclassified folder. | False |
-| analyse_fail | boolean | Analyse failed reads from input folder. By default the workflow will not process reads in a pod5_fail, bam_fail or fastq_fail sub-folder. | If selected and if the input is a multiplex folder the workflow will also process pod5_fail, bam_fail and fastq_fail folders. | False |
+| analyse_fail | boolean | Analyse failed reads from input folder. By default the workflow will not process reads in a pod5_fail, bam_fail or fastq_fail sub-folders. | If selected and if the input is a multiplex folder the workflow will also process pod5_fail, bam_fail and fastq_fail folders. | False |
 | watch_path | boolean | Enable to continuously watch the input directory for new input files. | This option enables the use of Nextflow’s directory watching feature to constantly monitor input directories for new files. | False |
 | fastq_chunk | integer | Sets the maximum number of reads per chunk returned from the data ingress layer. | Default is to not chunk data and return a single FASTQ file. |  |
 

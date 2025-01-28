@@ -60,6 +60,7 @@ docker-run:
                 "case22-allow_multiple_basecall_models",
                 "case23-empty_fastq", "case24-empty_fastq_gz",
                 "case25",
+                "fq-case26-xamcase23",
                 "xam-single-file", "xam-single-file-s3",
                 "xam-case01", "xam-case01-s3",
                 "xam-case02", "xam-case02-s3",
@@ -99,9 +100,18 @@ docker-run:
                 "xam-case22-barcode-sheet-name",
                 "xam-case22-barcode-sheet-sample-notindir",
                 "xam-case22-barcode-no-sheet",
-                "xam-case22-barcode-sheet-incl-fail",
-                "xam-case22-barcode-sheet-incl-unclassified",
                 "xam-case22-barcode-sheet-incl-all", "s3-xam-case22-barcode-sheet-incl-all",
+                "xam-case23-alias-name",
+                "xam-case23-alias-sheet",
+                "xam-case23-alias-sheet-dupe-alias",
+                "xam-case23-alias-sheet-bad-alias",
+                "xam-case23-alias-sheet-name",
+                "xam-case23-alias-sheet-sample-notindir",
+                "xam-case23-alias-no-sheet",
+                "xam-case23-alias-sheet-incl-fail",
+                "xam-case23-alias-sheet-incl-unclassified",
+                "xam-case23-alias-sheet-incl-all", "s3-xam-case23-barcode-sheet-incl-all",
+                "xam-case24-conflict",
                 "unexpected-params"
               ]
     rules:
@@ -382,6 +392,14 @@ docker-run:
             NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case\\'25/"
             AFTER_NEXTFLOW_CMD: >
               $TEST_CMD test_data/fastq_ingress/case\'25 fastq $$PWD/$$CI_PROJECT_NAME
+
+        # check that fastq explodes on minknow experiment directory for now
+        # see CW-5613
+        - if: $MATRIX_NAME == "fq-case26-xamcase23"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case26 --sample_sheet test_data/fastq_ingress/case26/sample_sheet.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "FASTQ input not currently supported when ingressing MinKNOW experiment folder."
 
         # now the cases for xam_ingress
         - if: $MATRIX_NAME == "xam-single-file"
@@ -683,23 +701,13 @@ docker-run:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet_sample_notindir.csv"
               AFTER_NEXTFLOW_CMD: >
                   $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME
-                  && grep "Ignoring barcode13: Found in sample sheet but sample was not found in the input folder." .nextflow.log
+                  && grep "Ignoring sample13: Found in sample sheet but a corresponding sample folder was not found in the input folder." .nextflow.log
         # case 22 missing sample name and sheet
         - if: $MATRIX_NAME == "xam-case22-barcode-no-sheet"
           variables:
               NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22"
               ASSERT_NEXTFLOW_FAILURE: "1"
               ASSERT_NEXTFLOW_FAILURE_REXP: "Sample sheet or sample name must be provided."
-        # case 22 use barcoded sample sheet include fail
-        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-fail"
-          variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv --analyse_fail"
-              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
-        # case 22 use barcoded sample sheet include unclassified
-        - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-unclassified"
-          variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case22 --sample_sheet test_data/xam_ingress/case22/sample_sheet.csv --analyse_unclassified"
-              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
         # case22 use barcoded sample sheet, include fail and unclassified
         - if: $MATRIX_NAME == "xam-case22-barcode-sheet-incl-all"
           variables:
@@ -709,6 +717,74 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case22 --sample_sheet ${S3_TEST_DATA}/xam_ingress/case22/sample_sheet.csv --analyse_fail --analyse_unclassified"
               AFTER_NEXTFLOW_CMD: $TEST_CMD -s $S3_TEST_DATA/xam_ingress/case22/sample_sheet.csv ${S3_TEST_DATA}/xam_ingress/case22/ bam $$PWD/$$CI_PROJECT_NAME;
+
+
+        # case 23 use sample sheet
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-dupe-alias"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet_dupealias.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "values in 'alias' column not unique"
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-bad-alias"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet_barcodealias.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "values in 'alias' column must not begin with 'barcode'"
+        # case 23 use sample name
+        - if: $MATRIX_NAME == "xam-case23-alias-name"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample sample1"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 23 use sample sheet and override with sample name
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-name"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample sample1 --sample_sheet test_data/xam_ingress/case23/sample_sheet.csv"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 23 target sample ignored as not in dir
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-sample-notindir"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet_sample_notindir.csv"
+              AFTER_NEXTFLOW_CMD: >
+                  $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME
+                  && grep "Ignoring sample13: Found in sample sheet but a corresponding sample folder was not found in the input folder." .nextflow.log
+        # case 23 missing sample name and sheet
+        - if: $MATRIX_NAME == "xam-case23-alias-no-sheet"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Sample sheet or sample name must be provided."
+        # case 23 use aliased sample sheet include fail
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-incl-fail"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet.csv --analyse_fail"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case 23 use aliased sample sheet include unclassified
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-incl-unclassified"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet.csv --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        # case23 use aliased sample sheet, include fail and unclassified
+        - if: $MATRIX_NAME == "xam-case23-alias-sheet-incl-all"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case23 --sample_sheet test_data/xam_ingress/case23/sample_sheet.csv --analyse_fail --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+        - if: $MATRIX_NAME == "s3-xam-case23-barcode-sheet-incl-all"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case23 --sample_sheet ${S3_TEST_DATA}/xam_ingress/case23/sample_sheet.csv --analyse_fail --analyse_unclassified"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD -s $S3_TEST_DATA/xam_ingress/case23/sample_sheet.csv ${S3_TEST_DATA}/xam_ingress/case23/ bam $$PWD/$$CI_PROJECT_NAME;
+
+
+        # case24 use sample sheet, supply a conflicting barcode and alias dir for the same sample row
+        - if: $MATRIX_NAME == "xam-case24-conflict"
+          variables:
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case24 --sample_sheet test_data/xam_ingress/case24/sample_sheet_conflict.csv"
+              ASSERT_NEXTFLOW_FAILURE: "1"
+              ASSERT_NEXTFLOW_FAILURE_REXP: "Found conflicting folders and cannot ingress both sample folder 'sample1' and barcode folder 'barcode01' for same sample sheet row."
+
 
         - if: $MATRIX_NAME == "unexpected-params"
           variables:

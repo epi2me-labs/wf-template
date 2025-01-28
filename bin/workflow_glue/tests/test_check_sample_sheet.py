@@ -35,6 +35,11 @@ ERROR_MESSAGES = [
         "if an 'analysis_group' column exists, it needs values in each row",
         "",
     ),
+    (
+        "sample_sheet_12.csv",
+        "values in 'alias' column must not begin with 'barcode'",
+        ""
+    ),
 ]
 
 
