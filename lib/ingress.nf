@@ -1034,8 +1034,17 @@ def get_valid_inputs(Map margs, ArrayList extensions){
         // if we are neither singleplex (case 2), nor multiplex (case 3), we must be an experiment dir (case 4)
         // a sample sheet or sample name is required to ensure we ingest the right data
         Boolean is_experimental_dir = !(is_singleplex_dir || is_multiplex_dir)
-        if (is_experimental_dir && !(margs.sample_sheet || margs.sample)) {
-            error "Sample sheet or sample name must be provided."
+        if (is_experimental_dir) {
+            if (!(margs.sample_sheet || margs.sample)) {
+                error "Sample sheet or sample name must be provided."
+            }
+            if (extensions[0] == ".fastq") {
+                // nextflow is used to manage the BAM files sent to bamstats/xam_ingress
+                // however, fastcat is used to manage FASTQ files directly, meaning it does not support analyse_unclassified,analyse_fail in the same way
+                // we'll avoid support for it for now
+                // see CW-5613
+                error "FASTQ input not currently supported when ingressing MinKNOW experiment folder."
+            }
         }
 
         // define string to re-use in error messages below
@@ -1077,36 +1086,72 @@ def get_valid_inputs(Map margs, ArrayList extensions){
                 def ch_sample_sheet = get_sample_sheet(
                     file(margs.sample_sheet), margs.required_sample_types
                 )
-                // get the union of both channels (missing values will be replaced with
-                // `null`)
-                def ch_union = Channel.fromPath(sub_dirs_with_target_files).map {
-                    [it.baseName, it]
-                }.join(ch_sample_sheet.map{[it.barcode, it]}, remainder: true)
+
+                // Divide samples into barcoded and aliased,
+                // we'll join these to the sample sheet individually
+                ch_samples = Channel.fromPath(sub_dirs_with_target_files)
+                | map { [it.baseName, it] }
+                | branch { basename, path ->
+                    barcoded: basename.startsWith("barcode")
+                    aliased: true
+                }
+
+                // Join barcoded samples to sample sheet, remove entries that do not match to sheet and warn accordingly
+                // after join. Yields [basename, path (if joined), alias, sample_sheet_row] for samples on disk and sample sheet,
+                // otherwise yields [basename, path, null] for samples missing a sample sheet entry, we'll prune these out
+                // by looking for a null alias (ie. no sample sheet entry) to prevent a join error on ch_union below.
+                ch_samples_barcoded = ch_samples.barcoded
+                    | join(ch_sample_sheet.map{ [it.barcode, it.alias, it] }, remainder:true)
+                    | map {
+                        if (it[2]) { it }
+                        else { log.warn "Ignoring ${it[0]}: Found in input folder but sample sheet has no such entry." }
+                    }
+                // repeat the above for aliased samples
+                ch_samples_aliased = ch_samples.aliased
+                    | join(ch_sample_sheet.map{ [it.alias, it.alias, it] }, remainder:true)
+                    | map {
+                        if (it[2]) { it }
+                        else { log.warn "Ignoring ${it[0]}: Found in input folder but sample sheet has no such entry." }
+                    }
+
+                // It is now safe to join (on alias) the barcode and alias samples together as we've removed entries that conflict with the sample sheet.
+                // The ch_union channel will now have an element for each row of the sample sheet
+                // combining the barcode and alias information and any paths for either that were matched on disk
+                ch_union = ch_samples_barcoded.join(ch_samples_aliased, by:2)
+
                 // after joining the channels, there are three possible cases:
-                // (i) valid input path and sample sheet entry are both present
+                // (i) valid input path for ONE of barcode and alias, and its sample sheet entry is present
+                //      --> we'll emit `[metamap-from-sample-sheet-entry, path]`
                 // (ii) there is a sample sheet entry but no corresponding input dir
                 //      --> we'll emit `[metamap-from-sample-sheet-entry, null]`
-                // (iii) there is a valid path, but the sample sheet entry is missing
-                //      --> drop this entry and print a warning to the log
-                ch_input = ch_union.map {barcode, path, sample_sheet_entry ->
+                // (iii) valid input path for BOTH barcode and alias, and its sample sheet entry are present
+                //      --> a directory for both the barcode and alias have been provided
+                //          and we don't know which to pick, so we'll raise an error for this conflict
+                // * sample_sheet_entry will be set here as we've filtered out those cases above
+                // * _alias and _sample_sheet_entry and merely unused dupes of alias and sample_sheet_entry due to the ch_union join
+                ch_input = ch_union.map {alias, barcode, barcode_path, sample_sheet_entry, _alias, alias_path, _sample_sheet_entry ->
+                    def path = null
+                    if (barcode_path && alias_path){
+                        error "Found conflicting folders and cannot ingress both sample folder '$alias' and barcode folder '$barcode' for same sample sheet row."
+                    }
+                    else if (barcode_path || alias_path) {
+                        path = barcode_path ?: alias_path
+                    }
 
-                    if (sample_sheet_entry) {
-                        if (!path) {
-                            log.warn "Ignoring $barcode: Found in sample sheet but sample was not found in the input folder."
-                        }
-                        if(margs.sample) {
-                            if (barcode == margs.sample) {
-                                [create_metamap(sample_sheet_entry), path]
-                            }
-                            else {
-                                log.warn "Ignoring $barcode: Found in input folder and sample sheet, but does not match sample name provided ($margs.sample)."
-                            }
-                        }
-                        else {
+                    if (!path) {
+                        log.warn "Ignoring $alias: Found in sample sheet but a corresponding sample folder was not found in the input folder."
+                    }
+                    if(margs.sample) {
+                        if (alias == margs.sample || barcode == margs.sample) {
                             [create_metamap(sample_sheet_entry), path]
                         }
-                    } else {
-                        log.warn "Ignoring $barcode: Found in input folder but sample sheet has no such entry."
+                        else if (path) {
+                            // only emit "found in input folder" if a path exists
+                            log.warn "Ignoring $alias: Found in input folder and sample sheet, but does not match sample name provided ($margs.sample)."
+                        }
+                    }
+                    else {
+                        [create_metamap(sample_sheet_entry), path]
                     }
                 }
             } else {

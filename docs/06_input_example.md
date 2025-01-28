@@ -45,10 +45,11 @@ The workflow will merge all files found inside each of the sub-folders into dist
 The folders may have any name, however folders named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on.
 
 
-### Multiple folders containing MinKNOW sample folders
+### Multiple folders containing MinKNOW sample folders with BAM files
 
 A folder containing more than one level of folders.
-The anticipated use case here is for analysing a MinKNOW experiment folder.
+The anticipated use case here is for analysing a MinKNOW experiment folder where the output format is BAM files.
+FASTQ files are not supported in this layout at this time.
 
 ```
 ─── input_folder
@@ -98,4 +99,5 @@ Additionally, the following rules apply when ingress is searching for files to b
 * Sub-folders beyond the first-level named `pod5_fail`, `fastq_fail` and `bam_fail` will be ignored by ingress unless the  `analyse_fail` option is switched on.
 * Sub-folders beyond the first-level named `unclassified` will be ignored by ingress unless the `analyse_unclassified` option is switched on. It is not possible to name a sample `unclassified` using the sample sheet.
 * It is an error to provide folders matching both the barcode and alias for a sample's row in the sample sheet.
+* Is is an error to provide a sample sheet where a sample alias begins with the word "barcode".
 

@@ -387,20 +387,24 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
                         {"groupSize": analysis_group_counts[grp], "groupTarget": grp}
                         for grp in sample_sheet["analysis_group"]
                     ]
+
                 # now, get the corresponding inputs for each entry in the sample sheet
                 # (sample sheet entries for which no input directory was found will have
                 # `None` as their input path in `valid_inputs`); we need a dict mapping
-                # barcodes to valid input paths for this
+                # basenames to valid input paths to check against sample sheet barcodes
+                # and aliases
                 valid_inputs_dict = {
                     path.name: [meta, path] for meta, path in valid_inputs
                 }
                 # reset `valid_inputs`
                 valid_inputs = []
                 for barcode, sample_sheet_entry in sample_sheet.iterrows():
-                    try:
-                        meta, path = valid_inputs_dict[barcode]
-                    except KeyError:
-                        meta, path = {}, None
+                    # try barcode
+                    meta, path = valid_inputs_dict.get(barcode, [{}, None])
+                    # try alias
+                    if not meta and sample_sheet_entry.get("alias"):
+                        meta, path = valid_inputs_dict.get(sample_sheet_entry["alias"], [{}, None])
+                    # update valid inputs with resulting meta
                     meta.update(dict(sample_sheet_entry))
                     valid_inputs.append([create_metadict(**dict(meta)), path])
 
@@ -408,9 +412,10 @@ def get_valid_inputs(input_path, input_type, output_type, sample_sheet, params):
             # this will filter samples regardless of whether the sample sheet is provided
             user_sample = params.get("sample")
             if user_sample is not None:
+                user_sample_is_barcode = user_sample.startswith("barcode")
                 valid_inputs = [
                     vi for vi in valid_inputs
-                    if vi[0]["barcode"] == user_sample
+                    if (user_sample_is_barcode and vi[0]["barcode"] == user_sample) or (not user_sample_is_barcode and vi[0]["alias"] == user_sample)
                 ]
 
     # Finally, in case of XAM, loop over the valid inputs again and check if
