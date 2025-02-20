@@ -54,7 +54,7 @@ behaviour, and leaves some room to do more clever things as necessary.
 """
 import sys
 
-from .util import wf_parser  # noqa: ABS101
+from ..util import wf_parser  # noqa: ABS101
 
 
 class SamHeader:
