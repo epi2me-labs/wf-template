@@ -209,6 +209,9 @@ def test_dict_from_pg_good():
         "PP:MEOW",
         "DS:this was a hoot",
         "VN:8",
+        "XX:this is my local interest tag",
+        "ab:this is another local interest tag",
+
     ]
     assert SamHeader.str_to_record('\t'.join(pg_fields)) == ("@PG", {
         "ID": "HOOT",
@@ -217,6 +220,8 @@ def test_dict_from_pg_good():
         "PP": "MEOW",
         "DS": "this was a hoot",
         "VN": "8",
+        "XX": "this is my local interest tag",
+        "ab": "this is another local interest tag",
     })
 
 
@@ -234,8 +239,9 @@ def test_str_to_record_type_malformed():
 
 def test_dict_from_pg_bad_key():
     """Test PG record with bad key explodes."""
-    with pytest.raises(Exception, match="PG with bad key 'OHNO'"):
-        SamHeader.str_to_record("@PG\tID:HOOT\tOHNO:MEOW")
+    for bad_key in ["OHNO", "O", "1X", "X_", "__"]:
+        with pytest.raises(Exception, match=f"PG with invalid tag: '{bad_key}'"):
+            SamHeader.str_to_record(f"@PG\tID:HOOT\t{bad_key}:MEOW")
 
 
 def test_dict_from_pg_no_id():
