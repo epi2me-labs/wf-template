@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use wf-common in makeReport.
 - Unexpected workflow parameters now cause the workflow to fail.
 - Sample sheets must not contain an alias that starts with "barcode".
+- Relaxed reheader_samstream RG and PG tag requirements to permit local interest tags.
+- Improved performance of reheader_samstream on very large files.
 
 ## [v5.3.4]
 ### Changed
