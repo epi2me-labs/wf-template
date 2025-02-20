@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 from pydantic import Field
 
-from workflow_glue.results_schema_helpers import BaseModel
+from workflow_glue.util import BaseModel
 
 
 class SampleType(str, Enum):

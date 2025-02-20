@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from .util import get_named_logger, wf_parser  # noqa: ABS101
+from ..util import get_named_logger, wf_parser  # noqa: ABS101
 
 
 # Some Excel users save their CSV as UTF-8 (and occasionally for a reason beyond my

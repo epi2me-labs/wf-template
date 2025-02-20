@@ -11,7 +11,8 @@ trouble later. There are two concerns of the testing here:
 from io import StringIO
 
 import pytest
-from workflow_glue.reheader_samstream import argparser, reheader_samstream, SamHeader
+from workflow_glue.wfg_helpers.reheader_samstream import (
+    argparser, reheader_samstream, SamHeader)
 
 
 def test_resolve_ok_ordered_pg_chain():

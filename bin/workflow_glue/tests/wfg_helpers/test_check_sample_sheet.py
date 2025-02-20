@@ -3,7 +3,7 @@
 import os
 
 import pytest
-from workflow_glue import check_sample_sheet
+from workflow_glue.wfg_helpers import check_sample_sheet
 
 
 # define a list of error messages (either the complete message or the first couple words
