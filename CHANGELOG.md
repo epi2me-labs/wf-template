@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sample sheets must not contain an alias that starts with "barcode".
 - Relaxed reheader_samstream RG and PG tag requirements to permit local interest tags.
 - Improved performance of reheader_samstream on very large files.
+- Updated wf-common to sha32300be2a0357806336b106f42724e3db86a73e0 to use ezcharts v0.12.0.
 
 ## [v5.3.4]
 ### Changed
