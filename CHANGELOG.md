@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `.DS_store` to `.gitignore` to prevent EPI2ME Desktop users on MacOS dirtying workflow git directories.
 - Input file paths can contain single quotes.
 ### Changed
+- Updated wf-common to sha9ef2f4e4585c4ce6a604616e77185077551abf50 to update ezcharts v0.13.1.
 - Use wf-common in makeReport.
 - Unexpected workflow parameters now cause the workflow to fail.
 - Sample sheets must not contain an alias that starts with "barcode".
