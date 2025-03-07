@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v5.4.0]
 ### Added
 - MinKNOW experiment directories may now be ingressed. Users must provide a sample sheet and/or a sample name to explicitly indicate which samples to analyse.
 - Sample sheet input cases may now ingress sample folders named after the alias in the sample sheet, and not just the barcodes.
@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sample sheets must not contain an alias that starts with "barcode".
 - Relaxed reheader_samstream RG and PG tag requirements to permit local interest tags.
 - Improved performance of reheader_samstream on very large files.
-- Updated wf-common to sha32300be2a0357806336b106f42724e3db86a73e0 to use ezcharts v0.12.0.
 
 ## [v5.3.4]
 ### Changed
