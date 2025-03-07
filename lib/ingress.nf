@@ -56,10 +56,10 @@ def add_run_IDs_and_basecall_models_to_meta(ch, boolean allow_multiple_basecall_
     // as `ingressed_run_ids`
     ch = ch | map { meta, reads, stats ->
         if (stats) {
-            run_ids = stats.resolve("run_ids").splitText().collect { it.strip() }
+            def run_ids = stats.resolve("run_ids").splitText().collect { it.strip() }
             ingressed_run_ids += run_ids
 
-            basecall_models = \
+            def basecall_models = \
                 stats.resolve("basecallers").splitText().collect { it.strip() }
             // check if we got more than one basecall model and set reads + stats to
             // `null` for that sample unless `allow_multiple_basecall_models`
