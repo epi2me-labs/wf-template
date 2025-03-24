@@ -86,10 +86,6 @@ class Sample:
         metadata={
             "title": "Sample alias",
             "description": "The alias for the sample given by the user"})
-    barcode: str = field(
-        metadata={
-            "title": "Sample barcode",
-            "description": "The physical barcode assigned to the sample"})
     sample_type: SampleType = field(
         metadata={
             "title": "Sample type",
@@ -98,6 +94,11 @@ class Sample:
         metadata={
             "title": "Sample pass",
             "description": "If true the sample has passed workflow checks"})
+    barcode: str | None = field(
+        default=None,
+        metadata={
+            "title": "Sample barcode",
+            "description": "The physical barcode assigned to the sample"})
     additional_identifiers: List[SampleIdentifier] = field(
         default_factory=list, metadata={
             "title": "Additional sample identifiers",
