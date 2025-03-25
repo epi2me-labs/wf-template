@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Dacite (which allows reading a previously made results model into another process) error when barcode field is null: `dacite.exceptions.WrongTypeError: wrong value type for field "samples.barcode" - should be "str" instead of value "None" of type "NoneType"`
+### Changed
+- Updated common image to `shaac8eeb1cbf7e13a137a0481a3ce3fb523a130c64` to include dacite to allow workflows to more easily manipulate data from schemas for reporting.
 
 ## [v5.5.0]
 ### Changed
