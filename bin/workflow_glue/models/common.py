@@ -191,6 +191,21 @@ class WorkflowResult():
             "title": "Client fields",
             "description": "Arbitrary key-value pairs provided by the client"})
 
+    def load_client_fields(self, filename):
+        """Load client fields."""
+        with open(filename) as f:
+            try:
+                client_fields = json.loads(f.read())
+                # convert any lists into strings for display
+                for key, value in client_fields.items():
+                    if isinstance(value, list):
+                        client_fields[key] = ', '.join(value)
+            except json.decoder.JSONDecodeError:
+                client_fields = {"error": "Error parsing client fields file."}
+
+        self.client_fields = client_fields
+        return self.client_fields
+
     def to_json(self, filename):
         """Save class as JSON."""
         with open(filename, 'w') as f:
