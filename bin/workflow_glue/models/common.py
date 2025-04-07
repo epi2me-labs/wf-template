@@ -1,9 +1,47 @@
 """Common model classes used across all workflows."""
 from dataclasses import asdict, dataclass, field
-from decimal import Decimal
 from enum import Enum
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+
+
+class WorkflowBaseModel:
+    """Common things for stuff in the model."""
+
+    def get_reportable_value(
+            self,
+            field_name: str,
+            decimal_places: int = None,
+            default_value: str = "N/A") -> Optional[str]:
+        """Get the value of a value and make it reportable."""
+        # Get the field info using the field name
+        field_info = self.__dataclass_fields__.get(field_name)
+        if field_info is None:
+            raise AttributeError(
+                f"{field_name!r} is not a field on {self.__class__.__name__}"
+            )
+
+        value = getattr(self, field_name)
+
+        if value is None:
+            return default_value
+
+        if isinstance(value, (int, float)):
+            if decimal_places:
+                value = round(value, decimal_places)
+            if value < 0.0001 or value > 99999999:
+                value = f"{value:.2E}"
+        else:
+            if decimal_places:
+                raise TypeError(
+                    "decimal_places is not a supported argument for a non-numeric.")
+
+        unit = field_info.metadata.get('unit')
+
+        if unit:
+            return f"{value} {unit}"
+
+        return str(value)
 
 
 class SampleType(str, Enum):
@@ -140,7 +178,7 @@ class Sample:
     def to_json(self, filename):
         """Save class as JSON."""
         with open(filename, 'w') as f:
-            json.dump(asdict(self), f, default=str, indent=2, cls=DecimalEncoder)
+            json.dump(asdict(self), f, default=str, indent=2)
 
 
 @dataclass
@@ -162,7 +200,7 @@ class RunStats:
 
 
 @dataclass
-class WorkflowResult():
+class WorkflowResult(WorkflowBaseModel):
     """
     Definition for results that will be returned by this workflow.
 
@@ -209,14 +247,4 @@ class WorkflowResult():
     def to_json(self, filename):
         """Save class as JSON."""
         with open(filename, 'w') as f:
-            json.dump(asdict(self), f, default=str, indent=2, cls=DecimalEncoder)
-
-
-class DecimalEncoder(json.JSONEncoder):
-    """This should probably be moved."""
-
-    def default(self, obj):
-        """Override the default method to handle Decimal objects."""
-        if isinstance(obj, Decimal):
-            return float(obj)
-        return super().default(obj)
+            json.dump(asdict(self), f, default=str, indent=2)
