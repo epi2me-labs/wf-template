@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated common image to `shaac8eeb1cbf7e13a137a0481a3ce3fb523a130c64` to include dacite to allow workflows to more easily manipulate data from schemas for reporting.
 ### Added
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
+- Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
 
 ## [v5.5.0]
 ### Changed
