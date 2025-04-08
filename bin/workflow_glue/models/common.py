@@ -140,7 +140,7 @@ class Sample:
     additional_identifiers: List[SampleIdentifier] = field(
         default_factory=list, metadata={
             "title": "Additional sample identifiers",
-            "description": "Addition identifiers for the sample"})
+            "description": "Additional identifiers for the sample"})
     sample_checks: list[CheckResult] = field(
         default_factory=list, metadata={
             "title": "Sample checks",
@@ -162,9 +162,9 @@ class Sample:
 
     def get_sample_identifier(self, sample_identifier):
         """Get a sample identifier given the identifier name."""
-        for indentifier in self.additional_identifiers:
-            if indentifier.name == sample_identifier:
-                return indentifier.value
+        for identifier in self.additional_identifiers:
+            if identifier.name == sample_identifier:
+                return identifier.value
         raise KeyError("Sample identifier not found")
 
     def set_sample_identifier(self, name, value):
@@ -179,6 +179,41 @@ class Sample:
         """Save class as JSON."""
         with open(filename, 'w') as f:
             json.dump(asdict(self), f, default=str, indent=2)
+
+    def get_reportable_qc_status(self, max_criteria=4):
+        """Store global status of the sample and list of QC criteria to show.
+
+        :params max_criteria: Maximum number of criteria to be reported.
+        """
+        # Store global status: pass/ failed
+        qc_global_status = [{"status": self.sample_pass, "scope": "QC status"}]
+        qc_criteria = []
+        if self.sample_pass:
+            qc_criteria.append(
+                    {"status": self.sample_pass, "scope": "All acceptance criteria met"}
+            )
+        else:
+            # Report failed criteria until a maximum value
+            for qc in self.sample_checks:
+                if not qc.check_pass:  # append criteria if failed
+                    qc_criteria.append(
+                        {
+                            "status": qc.check_pass,
+                            "category": qc.friendly_check_category(),
+                            "scope": qc.friendly_check_name(),
+                        }
+                    )
+            if len(qc_criteria) > max_criteria:
+                # Replace all the failed criteria, with a sentence with the number
+                # instead of listing all of them.
+                # Set status to False as more than max_criteria are failed.
+                qc_criteria = [
+                    {
+                        "status": False,
+                        "scope": f"{len(qc_criteria)} acceptance criteria",
+                    },
+                ]
+        return qc_global_status, qc_criteria
 
 
 @dataclass

@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 
 import pytest
-from workflow_glue.models.common import SampleType
+from workflow_glue.models.common import Sample, SampleType
 from workflow_glue.models.common import WorkflowBaseModel
 from workflow_glue.models.common import WorkflowResult
 from workflow_glue.models.custom import CheckResult
@@ -116,3 +116,97 @@ def test_load_client_fields_error(test_data):
     assert workflow.load_client_fields(
         f"{test_data}/workflow_glue/client_fields_malformed.json") == {
             "error": "Error parsing client fields file."}
+
+
+def sample(sample_checks):
+    """Create a Sample instance."""
+    return Sample(
+        alias="alias",
+        sample_type="test_sample",
+        sample_checks=sample_checks,
+        sample_pass=False,
+    )
+
+
+@pytest.mark.parametrize(
+    (
+        "checkresults,max_criteria,expected_qc_global_status,expected_qc_criteria"
+    ),
+    [
+        (
+            [
+                CheckResult("example_check", "total_reads", True),
+                CheckResult("example_check", "aligned_reads", True),
+            ],
+            4,
+            [{"status": True, "scope": "QC status"}],
+            [{"status": True, "scope": "All acceptance criteria met"}],
+        ),
+        (
+            [
+                CheckResult("example_check", "total_reads", True),
+                CheckResult("example_check", "aligned_reads", False),
+            ],
+            2,
+            [{"status": False, "scope": "QC status"}],
+            [
+                {
+                    "status": False,
+                    "category": "Example check category",
+                    "scope": "Aligned reads",
+                }
+            ],
+        ),
+        (
+            [
+                CheckResult("example_check", "total_reads", False),
+                CheckResult("example_check", "aligned_reads", False),
+            ],
+            1,
+            [{"status": False, "scope": "QC status"}],
+            [{"status": False, "scope": "2 acceptance criteria"}],
+        ),
+    ],
+)
+def test_get_reportable_qc_status(
+    checkresults, max_criteria, expected_qc_global_status, expected_qc_criteria
+):
+    """Test QC components for report."""
+    sample_instance = sample(checkresults)
+    qc_global_status, qc_criteria = sample_instance.get_reportable_qc_status(
+        max_criteria=max_criteria
+    )
+    assert qc_global_status == expected_qc_global_status
+    assert qc_criteria == expected_qc_criteria
+
+
+@pytest.mark.parametrize(
+    ("checkresults,expected_sample_pass"),
+    [
+        (
+            [
+                CheckResult("example_check", "total_reads", True),
+                CheckResult("example_check", "aligned_reads", True),
+            ],
+            True,
+        ),
+        (
+            [
+                CheckResult("example_check", "total_reads", True),
+                CheckResult("example_check", "aligned_reads", False),
+            ],
+            False,
+        ),
+        (
+            [
+                CheckResult("example_check", "total_reads", False),
+                CheckResult("example_check", "aligned_reads", False),
+            ],
+            False,
+        ),
+    ],
+)
+def test_get_sample_pass(checkresults, expected_sample_pass):
+    """Test sample_pass check post init method."""
+    sample_instance = sample(checkresults)
+    assert sample_instance.sample_pass == expected_sample_pass
