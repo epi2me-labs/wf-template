@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Dacite (which allows reading a previously made results model into another process) error when barcode field is null: `dacite.exceptions.WrongTypeError: wrong value type for field "samples.barcode" - should be "str" instead of value "None" of type "NoneType"`
 ### Changed
-- Updated common image to `shaac8eeb1cbf7e13a137a0481a3ce3fb523a130c64` to include dacite to allow workflows to more easily manipulate data from schemas for reporting.
+- Updated common image to `shae5a4b928f3b99607eba24c2ee59187068349334d` to:
+    - Add dacite to allow workflows to more easily manipulate data from schemas for reporting.
+    - Remove excessive debug logging from fastcat which can occlude errors found in FASTQ files during ingress.
 ### Added
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
 - Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
