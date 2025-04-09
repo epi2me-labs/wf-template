@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
 - Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
 - Common SampleModel provides get_reportable_qc_status method to homogenise the QC criteria display on ONT reports.
+- Common WorkflowResult provides load_versions and load_params methods to load versions and params files into the model.
 
 ## [v5.5.0]
 ### Changed

@@ -53,6 +53,12 @@ def mass():
     return Mass(mass_all=10)
 
 
+@pytest.fixture
+def workflow():
+    """Fixture that returns a WorkflowResult instance."""
+    return WorkflowResult(samples=[], workflow_checks=[])
+
+
 def test_units(mass):
     """Test to show units are displayed when requested."""
     assert mass.mass_all == 10
@@ -97,9 +103,8 @@ def test_sci_notation(mass):
     assert mass.get_reportable_value("mass_all") == "1.00E+08 ng"
 
 
-def test_load_client_fields(test_data):
+def test_load_client_fields(workflow, test_data):
     """Test client field loading."""
-    workflow = WorkflowResult(samples=[], workflow_checks=[])
     assert workflow.load_client_fields(
         f"{test_data}/workflow_glue/client_fields.json") == {
             "operator": "Dwight Schrute",
@@ -210,3 +215,76 @@ def test_get_sample_pass(checkresults, expected_sample_pass):
     """Test sample_pass check post init method."""
     sample_instance = sample(checkresults)
     assert sample_instance.sample_pass == expected_sample_pass
+
+
+@pytest.mark.parametrize(
+    "versions_input, error_msg, expected_result",
+    [
+        ("file", None,
+            [
+                {"name": "minimap2", "version": "2.28-r1122"},
+                {"name": "samtools", "version": "1.21"},
+                {"name": "fastcat", "version": "0.22.0"},
+            ]),
+        ("dir", None,  # dir
+            [
+                {"name": "minimap2", "version": "2.28-r1122"},
+                {"name": "samtools", "version": "1.21"},
+                {"name": "fastcat", "version": "0.22.0"},
+            ]),
+        ("file",  r"No such file:", None),  # no existing file
+    ],
+)
+def test_load_versions(tmp_path, workflow, versions_input, error_msg, expected_result):
+    """Test parse_versions."""
+    if error_msg:
+        with pytest.raises(FileNotFoundError, match=error_msg):
+            workflow.load_versions("non_existing_file.txt")
+    else:
+        versions = "minimap2,2.28-r1122\nsamtools,1.21\nfastcat,0.22.0"
+        # Use tmp_path to create a temporary directory
+        temp_dir = tmp_path / "temp_dir"
+        temp_dir.mkdir()
+        # Create a file inside the temporary directory
+        versions_path = temp_dir / "versions.txt"
+        versions_path.write_text(versions)
+        if versions_input == "file":
+            versions_path = versions_path
+        elif versions_input == "dir":
+            # return temp dir where the versions file was created
+            versions_path = versions_path.parent
+        assert (workflow.load_versions(versions_path) == expected_result)
+
+
+@pytest.mark.parametrize(
+    "keep_params,error_msg,expected_result",
+    [
+        (
+            ["wfversion", "fastq"], None,
+            {
+                "wfversion": "v0.0.0",
+                "fastq": "/wf-example/test_data/fastq",
+            },
+        ),
+        (None, r"No such file:", None),
+        (None, r"Invalid JSON file", None),
+    ],
+)
+def test_parse_params(tmp_path, workflow, keep_params, error_msg, expected_result):
+    """Test parse_params."""
+    params = """
+{"help":false,"wfversion":"v0.0.0","fastq":"/wf-example/test_data/fastq"}"""
+    if error_msg:
+        if "Invalid JSON" in error_msg:  # An empty file
+            with pytest.raises(ValueError, match=error_msg):
+                invalid_json = tmp_path / "invalid.json"
+                invalid_json.touch()
+                workflow.load_params(str(invalid_json))
+        else:  # no file exist
+            with pytest.raises(FileNotFoundError, match=fr'{error_msg}'):
+                workflow.load_params("non_existing_file.json")
+    else:
+        # Create a file inside the temporary directory
+        params_path = tmp_path / "params.json"
+        params_path.write_text(params)
+        assert (workflow.load_params(params_path, keep_params) == expected_result)

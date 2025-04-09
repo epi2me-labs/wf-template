@@ -2,7 +2,12 @@
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from ..util import get_named_logger  # noqa: ABS101
+
+logger = get_named_logger("Models")
 
 
 class WorkflowBaseModel:
@@ -263,6 +268,16 @@ class WorkflowResult(WorkflowBaseModel):
         default_factory=dict, metadata={
             "title": "Client fields",
             "description": "Arbitrary key-value pairs provided by the client"})
+    versions: dict[str, Any] | None = field(
+        default_factory=dict, metadata={
+            "title": "Analysis tool versions",
+            "description": """Arbitrary key-value pairs collecting the
+            software used and the corresponding versions"""})
+    params: dict[str, Any] | None = field(
+        default_factory=dict, metadata={
+            "title": "Pertinent parameters",
+            "description": """Arbitrary key-value pairs with the
+            options chosen by the user"""})
 
     def load_client_fields(self, filename):
         """Load client fields."""
@@ -278,6 +293,46 @@ class WorkflowResult(WorkflowBaseModel):
 
         self.client_fields = client_fields
         return self.client_fields
+
+    def load_params(self, params_json, keep=None):
+        """Create a workflow params dict."""
+        params_json = Path(params_json)
+        if keep is None:
+            keep = []
+        if not params_json.is_file():
+            raise FileNotFoundError(f"No such file: {params_json}")
+        with open(params_json, "r") as f:
+            try:
+                params_dict = json.loads(f.read())
+                self.params = {
+                    k: v for k, v in params_dict.items() if k in set(keep)
+                }
+                return self.params
+            except ValueError:
+                raise ValueError(f"Invalid JSON file: {params_json}")
+
+    def load_versions(self, versions_path):
+        """Create a version list of dict."""
+        versions_path = Path(versions_path)
+        if not versions_path.exists():
+            raise FileNotFoundError(f"No such file: {versions_path}")
+
+        if versions_path.is_dir():
+            version_files = [
+                vp for vp in versions_path.iterdir() if vp.is_file()
+            ]
+        elif versions_path.is_file():
+            version_files = [versions_path]
+        else:
+            raise IOError(f"{versions_path} should be either a directory or a file")
+        for fname in version_files:
+            versions = []
+            with open(fname, "r", encoding="utf-8") as fh:
+                for line in fh.readlines():
+                    name, version = line.strip().split(",")
+                    versions.append({"name": name, "version": version})
+        self.versions = versions
+        return self.versions
 
     def to_json(self, filename):
         """Save class as JSON."""
