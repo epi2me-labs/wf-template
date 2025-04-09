@@ -10,12 +10,29 @@ from ..util import get_named_logger  # noqa: ABS101
 logger = get_named_logger("Models")
 
 
+@dataclass
 class WorkflowBaseModel:
     """Common things for stuff in the model."""
+
+    def get(
+        self,
+        field_name: str,
+        title: bool = True,
+        **kwargs
+    ):
+        """Get reportable field tuple."""
+        field_info = self.__dataclass_fields__.get(field_name)
+        # provide an empty string default title to minimise drama
+        field_title = field_info.metadata.get("title", "")
+        value = self.get_reportable_value(field_name=field_name, **kwargs)
+        if title:
+            return (field_title, value)
+        return value
 
     def get_reportable_value(
             self,
             field_name: str,
+            *,
             decimal_places: int = None,
             default_value: str = "N/A") -> Optional[str]:
         """Get the value of a value and make it reportable."""

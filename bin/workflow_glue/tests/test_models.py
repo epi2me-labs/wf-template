@@ -44,13 +44,49 @@ class Mass(WorkflowBaseModel):
         metadata={
             "title": "Molecular mass of all molecules",
             "description": "The total mass of all molecules",
-            "unit": "ng"})
+            "unit": "ng"
+        })
+    mass_ratio: float | None = field(  # noqa: NT001
+        default=None,
+        metadata={
+            "title": "Mass ratio",
+            "description": """The ratio of the molecular mass of
+            molecules within the user specified read length bounds,
+            to the mass of all molecules"""
+        })
+    mass_full_length: float | None = field(  # noqa: NT001
+        default=None,
+        metadata={
+            "title": "Molecular mass of full length molecules",
+            "description": """The total mass of molecules within
+            user specified read length bounds"""
+        })
+    no_title: int | None = field(  # noqa: NT001
+        default=None,
+        metadata={
+            "description": """The total mass of molecules within
+            user specified read length bounds"""
+        })
 
 
 @pytest.fixture
 def mass():
     """Fixture that returns a Mass instance."""
-    return Mass(mass_all=10)
+    return Mass(mass_all=10, mass_ratio=0.493, mass_full_length=5, no_title=444)
+
+
+def test_get_reportable_tuple(mass):
+    """Test to show (title,value) are displayed when requested."""
+    assert mass.get("mass_all") == (
+        "Molecular mass of all molecules",
+        "10 ng",
+    )
+    assert mass.get("mass_ratio", decimal_places=2) == (
+        "Mass ratio",
+        "0.49",
+    )
+    assert mass.get("mass_ratio", decimal_places=2, title=False) == "0.49"
+    assert mass.get("no_title") == ("", "444")
 
 
 @pytest.fixture
@@ -62,7 +98,7 @@ def workflow():
 def test_units(mass):
     """Test to show units are displayed when requested."""
     assert mass.mass_all == 10
-    assert mass.get_reportable_value("mass_all", 0) == "10 ng"
+    assert mass.get_reportable_value("mass_all", decimal_places=0) == "10 ng"
 
 
 def test_units_missing_field(mass):
