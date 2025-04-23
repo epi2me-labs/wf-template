@@ -256,19 +256,15 @@ def test_get_sample_pass(checkresults, expected_sample_pass):
 @pytest.mark.parametrize(
     "versions_input, error_msg, expected_result",
     [
-        ("file", None,
-            [
-                {"name": "minimap2", "version": "2.28-r1122"},
-                {"name": "samtools", "version": "1.21"},
-                {"name": "fastcat", "version": "0.22.0"},
-            ]),
-        ("dir", None,  # dir
-            [
-                {"name": "minimap2", "version": "2.28-r1122"},
-                {"name": "samtools", "version": "1.21"},
-                {"name": "fastcat", "version": "0.22.0"},
-            ]),
-        ("file",  r"No such file:", None),  # no existing file
+        (
+            "file", None,
+            {"minimap2": "2.28-r1122", "samtools": "1.21", "fastcat": "0.22.0"},
+        ),
+        (
+            "dir", None,  # dir
+            {"minimap2": "2.28-r1122", "samtools": "1.21", "fastcat": "0.22.0"},
+        ),
+        ("file", r"No such file:", None),  # no existing file
     ],
 )
 def test_load_versions(tmp_path, workflow, versions_input, error_msg, expected_result):
