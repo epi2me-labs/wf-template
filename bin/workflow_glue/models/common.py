@@ -208,7 +208,7 @@ class Sample:
         :params max_criteria: Maximum number of criteria to be reported.
         """
         # Store global status: pass/ failed
-        qc_global_status = [{"status": self.sample_pass, "scope": "QC status"}]
+        qc_global_status = {"status": self.sample_pass, "scope": "QC status"}
         qc_criteria = []
         if self.sample_pass:
             qc_criteria.append(

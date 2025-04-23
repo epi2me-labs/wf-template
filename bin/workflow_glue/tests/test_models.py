@@ -180,7 +180,7 @@ def sample(sample_checks):
                 CheckResult("example_check", "aligned_reads", True),
             ],
             4,
-            [{"status": True, "scope": "QC status"}],
+            {"status": True, "scope": "QC status"},
             [{"status": True, "scope": "All acceptance criteria met"}],
         ),
         (
@@ -189,7 +189,7 @@ def sample(sample_checks):
                 CheckResult("example_check", "aligned_reads", False),
             ],
             2,
-            [{"status": False, "scope": "QC status"}],
+            {"status": False, "scope": "QC status"},
             [
                 {
                     "status": False,
@@ -204,7 +204,7 @@ def sample(sample_checks):
                 CheckResult("example_check", "aligned_reads", False),
             ],
             1,
-            [{"status": False, "scope": "QC status"}],
+            {"status": False, "scope": "QC status"},
             [{"status": False, "scope": "2 acceptance criteria"}],
         ),
     ],
