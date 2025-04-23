@@ -288,12 +288,12 @@ class WorkflowResult(WorkflowBaseModel):
     versions: dict[str, Any] | None = field(
         default_factory=dict, metadata={
             "title": "Analysis tool versions",
-            "description": """Arbitrary key-value pairs collecting the
+            "description": """Key-value pairs collecting the
             software used and the corresponding versions"""})
     params: dict[str, Any] | None = field(
         default_factory=dict, metadata={
             "title": "Pertinent parameters",
-            "description": """Arbitrary key-value pairs with the
+            "description": """Key-value pairs with the
             options chosen by the user"""})
 
     def load_client_fields(self, filename):
@@ -343,11 +343,11 @@ class WorkflowResult(WorkflowBaseModel):
         else:
             raise IOError(f"{versions_path} should be either a directory or a file")
         for fname in version_files:
-            versions = []
+            versions = {}
             with open(fname, "r", encoding="utf-8") as fh:
                 for line in fh.readlines():
                     name, version = line.strip().split(",")
-                    versions.append({"name": name, "version": version})
+                    versions[name] = version
         self.versions = versions
         return self.versions
 
