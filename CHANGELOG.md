@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Dacite (which allows reading a previously made results model into another process) error when barcode field is null: `dacite.exceptions.WrongTypeError: wrong value type for field "samples.barcode" - should be "str" instead of value "None" of type "NoneType"`
+- Updated ezcharts to 0.14.0, fixing:
+    - Sequence summary read length N50 incorrectly displayed minimum read length, it now correctly shows the N50.
+    - Sequence summary component alignment and coverage plots failed to plot under some conditions.
 ### Changed
-- Updated common image to `shae5a4b928f3b99607eba24c2ee59187068349334d` to:
+- Updated common image to `sha1c69fd30053aad5d516e9567b3944384325a0fee` to:
     - Add dacite to allow workflows to more easily manipulate data from schemas for reporting.
     - Remove excessive debug logging from fastcat which can occlude errors found in FASTQ files during ingress.
+    - Update ezcharts to 0.14.0 which now allows:
+        - LeadSummary and QC tables
+        - Page number footer
 ### Added
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
 - Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
