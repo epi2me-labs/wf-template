@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Update ezcharts to 0.14.0 which now allows:
         - LeadSummary and QC tables
         - Page number footer
+- Update epi2melabs version in pre-commit so README links to the Docker "Get started" guide instead of Docker Desktop docs in preamble.
 ### Added
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
 - Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
