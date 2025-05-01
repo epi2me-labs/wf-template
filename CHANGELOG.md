@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - LeadSummary and QC tables
         - Page number footer
 - Update epi2melabs version in pre-commit so README links to the Docker "Get started" guide instead of Docker Desktop docs in preamble.
+- Updated banner text to say "EPI2ME" instead of "EPI2ME Labs" to match current branding. This has no effect on the workflow other than the banner text in Nextflow standard output.
 ### Added
 - Client fields (key value pairs used for display in the reports) are now included in the workflow results model.
 - Common WorkflowBaseModel provides get_reportable_value method to prettify any model field with appropriate decimal places and units for reporting purposes.
