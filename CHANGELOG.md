@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v5.6.0]
 ### Fixed
 - Dacite (which allows reading a previously made results model into another process) error when barcode field is null: `dacite.exceptions.WrongTypeError: wrong value type for field "samples.barcode" - should be "str" instead of value "None" of type "NoneType"`
 - Updated ezcharts to 0.14.0, fixing:
