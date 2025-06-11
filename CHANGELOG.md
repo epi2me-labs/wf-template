@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- IGV configuration now allows per-track customisation options such as display mode, show alignments and color by.
+- IGV additional option `--keep-track-order` to output the tracks in the order specified in the fofn file. Default behaviour is to sort lexicographically.
+
 ## [v5.6.1]
 This release fixes a dependency problem in our testing system and makes no changes to our workflow template standard.
 ### Fixed
