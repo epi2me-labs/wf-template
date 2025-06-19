@@ -145,7 +145,7 @@ class TrackBuilder:
             samples = dict(sorted(samples.items()))
         # Add NO_SAMPLE as last
         if "NO_SAMPLE" in tmp_samples.keys():
-            samples.append("NO_SAMPLE")
+            samples.update({"NO_SAMPLE": tmp_samples["NO_SAMPLE"]})
         self.samples = samples
 
     def build_igv_json(self):
