@@ -215,6 +215,15 @@ Additionally, the following rules apply when ingress is searching for files to b
 
 
 
+## Pipeline overview
+
+<!---High level numbered list of main steps of the workflow and hyperlink to any tools used. If multiple workflows/different modes perhaps have subheadings and numbered steps. Use nested numbering or bullets where required.--->
+### 1. Concatenates input files and generate per read stats.
+
+The [fastcat/bamstats](https://github.com/epi2me-labs/fastcat) tool is used to concatenate multifile samples to be processed by the workflow. It will also output per read stats including average read lengths and qualities.
+
+
+
 ## Input parameters
 
 ### Input Options
@@ -264,15 +273,6 @@ Output files may be aggregated including information for all samples or provided
 
 
 
-## Pipeline overview
-
-<!---High level numbered list of main steps of the workflow and hyperlink to any tools used. If multiple workflows/different modes perhaps have subheadings and numbered steps. Use nested numbering or bullets where required.--->
-### 1. Concatenates input files and generate per read stats.
-
-The [fastcat/bamstats](https://github.com/epi2me-labs/fastcat) tool is used to concatenate multifile samples to be processed by the workflow. It will also output per read stats including average read lengths and qualities.
-
-
-
 ## Troubleshooting
 
 <!---Any additional tips.--->
@@ -281,9 +281,9 @@ The [fastcat/bamstats](https://github.com/epi2me-labs/fastcat) tool is used to c
 
 
 
-## FAQ's
+## FAQs
 
-<!---Frequently asked questions, pose any known limitations as FAQ's.--->
+<!---Frequently asked questions, pose any known limitations as FAQs.--->
 
 If your question is not answered here, please report any issues or suggestions on the [github issues](https://github.com/epi2me-labs/wf-template/issues) page or start a discussion on the [community](https://community.nanoporetech.com/).
 
