@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reordered README sections so that pipeline overview is before input parameters.
 - "FAQ's" section corrected to "FAQs".
 
+### Fixed
+- A number of `ingress.nf` docstrings have been updated to include missing parameters. [CW-4027]
+
 ## [v5.6.2]
 ### Added
 - IGV configuration now allows per-track customisation options such as display mode, show alignments and color by.
