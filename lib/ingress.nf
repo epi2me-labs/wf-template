@@ -84,7 +84,11 @@ def add_run_IDs_and_basecall_models_to_meta(ch, boolean allow_multiple_basecall_
     // bit grim but decouples ingress metadata from workflow main.nf
     // additionally no need to use CWUtil as we're not overriding any user params
     ch | subscribe(onComplete: {
-        params.wf["ingress.run_ids"] = ingressed_run_ids
+        if (params.wf["ingress.run_ids"] == null) {
+            params.wf["ingress.run_ids"] = ingressed_run_ids
+        } else {
+            params.wf["ingress.run_ids"] += ingressed_run_ids
+        }
     })
     return ch
 }
