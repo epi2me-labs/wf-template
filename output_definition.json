@@ -1,51 +1,211 @@
 {
   "files": {
     "workflow-report": {
-      "filepath": "./wf-template-report.html",
-      "title": "workflow report",
-      "description": "Report for all samples",
+      "filepath": "wf-template-report.html",
+      "title": "Workflow report",
+      "description": "Report for all samples.",
       "mime-type": "text/html",
       "optional": false,
       "type": "aggregated"
     },
-    "read-stats-per-file": {
-      "filepath": "./fastq_ingress_results/reads/fastcat_stats/per-file-stats.tsv",
-      "title": "Per file read stats",
-      "description": "A TSV with per file read stats, including all samples.",
-      "mime-type": "text/tsv",
-      "optional": false,
-      "type": "aggregated"
-    },
-    "read-stats-per-read": {
-      "filepath": "./fastq_ingress_results/reads/fastcat_stats/per-read-stats.tsv",
-      "title": "Per read stats",
-      "description": "A TSV with per read stats, including all samples.",
-      "mime-type": "text/tsv",
-      "optional": false,
-      "type": "aggregated"
-    },
-    "run-ids": {
-      "filepath": "./fastq_ingress_results/reads/fastcat_stats/run_ids",
-      "title": "Run ID's",
-      "description": "List of run ID's present in reads.",
+    "fastq-run-ids": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/run_ids",
+      "title": "Run IDs (fastq ingress)",
+      "description": "List of run IDs present in reads.",
       "mime-type": "text/txt",
-      "optional": false,
-      "type": "aggregated"
+      "optional": true,
+      "type": "per-sample"
     },
-    "metamap": {
-      "filepath": "./fastq_ingress_results/reads/metamap.json",
-      "title": "Meta map json",
-      "description": "Meta data used in workflow presented in a JSON.",
-      "mime-type": "text/json",
-      "optional": false,
-      "type": "aggregated"
+    "fastq-basecallers": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/basecallers",
+      "title": "Basecalling models (fastq ingress)",
+      "description": "List of basecalling models referenced in the input files.",
+      "mime-type": "text/txt",
+      "optional": true,
+      "type": "per-sample"
     },
-    "sample-data": {
-      "filepath": "./fastq_ingress_results/reads/{{ alias }}.fastq.gz",
+    "fastq-n-seqs": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/n_seqs",
+      "title": "Number of reads (fastq ingress)",
+      "description": "Number of reads returned by [fastcat](https://github.com/epi2me-labs/fastcat).",
+      "mime-type": "text/txt",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-run-ids-per-file": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/per-file-runids.tsv",
+      "title": "Run ID counts (fastq ingress)",
+      "description": "File with run ID read counts.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-basecallers-per-file": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/per-file-basecallers.tsv",
+      "title": "Basecallers counts (fastq ingress)",
+        "description": "TSV with per-file read counts grouped by basecaller.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "read-stats-per-file": {
+      "filepath": "fastq_ingress_results/reads/fastcat_stats/per-file-stats.tsv",
+      "title": "Per-file read stats (fastq ingress)",
+      "description": "A TSV with per-file read stats.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-read-stats-hist-length": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/length.hist",
+      "title": "Read length histogram",
+      "description": "A TSV of binned read length counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-read-stats-hist-quality": {
+      "filepath": "fastq_ingress_results/{{ alias }}/fastcat_stats/quality.hist",
+      "title": "Read quality histogram",
+      "description": "A TSV of binned read quality counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-sample-data": {
+      "filepath": "fastq_ingress_results/{{ alias }}/reads.fastq.gz",
       "title": "Concatenated sequence data",
-      "description": "Per sample reads concatenated in to one fastq file.",
+      "description": "Per-sample reads concatenated into one FASTQ file.",
+      "mime-type": "application/gzip",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "fastq-metamap": {
+      "filepath": "fastq_ingress_results/reads/metamap.json",
+      "title": "Metadata JSON (fastq ingress)",
+      "description": "Per-sample metadata used in the workflow as JSON.",
       "mime-type": "text/json",
-      "optional": false,
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-run-ids": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/run_ids",
+      "title": "Run IDs (xam ingress)",
+      "description": "List of run IDs present in input reads.",
+      "mime-type": "text/txt",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-basecallers": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/basecallers",
+      "title": "Basecalling models (xam ingress)",
+      "description": "List of basecaller models used to basecall input reads.",
+      "mime-type": "text/txt",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-n-seqs": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/n_seqs",
+      "title": "Number of reads (xam ingress)",
+      "description": "Number of reads after running bamstats.",
+      "mime-type": "text/txt",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-run-ids-per-file": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/bamstats.runids.tsv",
+      "title": "Run ID counts (xam ingress)",
+      "description": "TSV file containing read counts grouped by run ID.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-basecallers-per-file": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/bamstats.basecallers.tsv",
+      "title": "Basecalling model counts (xam ingress)",
+      "description": "TSV with per-file basecaller read counts.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-flagstat-per-file": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/bamstats.flagstat.tsv",
+      "title": "Alignment flag stat counts",
+      "description": "TSV file containing alignment flag counts per contig.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-length": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/length.hist",
+      "title": "Read alignment length histogram",
+      "description": "A TSV of binned read length counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-quality": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/quality.hist",
+      "title": "Read alignment quality histogram",
+      "description": "A TSV of binned read quality counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-length-unmap-hist": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/length.unmap.hist",
+      "title": "Read alignment length histogram for unmapped reads",
+      "description": "A TSV of binned unmapped read length counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-quality-unmap-hist": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/quality.unmap.hist",
+      "title": "Read alignment quality histogram for unmapped reads",
+      "description": "A TSV of binned unmapped read quality counts representing a histogram.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-accuracy": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/accuracy.hist",
+      "title": "Read alignment accuracy histogram",
+      "description": "A TSV containing a histogram of the alignment accuracy of input reads.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "xam-read-stats-hist-coverage": {
+      "filepath": "xam_ingress_results/{{ alias }}/bamstats_results/coverage.hist",
+      "title": "Read alignment coverage histogram",
+      "description": "A TSV containing a histogram of the alignment coverage of input reads.",
+      "mime-type": "text/tsv",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "sample-data-bam": {
+        "filepath": "xam_ingress_results/{{ alias }}/reads.bam",
+        "title": "BAM file",
+        "description": "Per-sample reads merged and sorted in one BAM file.",
+        "mime-type": "application/gzip",
+        "optional": true,
+        "type": "per-sample"
+      },
+    "sample-data-bai": {
+        "filepath": "xam_ingress_results/{{ alias }}/reads.bam.bai",
+        "title": "BAM index file",
+        "description": "BAM index file resulting from ingress.",
+        "mime-type": "application/octet-stream",
+        "optional": true,
+        "type": "per-sample"
+      },
+    "xam-metamap": {
+      "filepath": "xam_ingress_results/reads/metamap.json",
+      "title": "Metadata JSON (xam ingress)",
+      "description": "Per-sample metadata used in the workflow as JSON.",
+      "mime-type": "text/json",
+      "optional": true,
       "type": "per-sample"
     }
   }
