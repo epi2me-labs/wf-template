@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - A number of `ingress.nf` docstrings have been updated to include missing parameters. [CW-4027]
 - `params.wf["ingress.run_ids"]` correctly lists all run IDs encountered during ingress. Previously there was a race condition where the last call to ingress would override the Run ID list.
-
+- Incorrect and missing definitions in the `output_definitions.json` file.
 
 ## [v5.6.2]
 ### Added
