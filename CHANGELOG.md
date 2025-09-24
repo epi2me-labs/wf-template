@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `WorkflowResult` now records the workflow version so that it can be exported alongside the rest of the workflow results, parameters and versions.
+
 ### Changed
 - Reordered README sections so that pipeline overview is before input parameters.
 - "FAQ's" section corrected to "FAQs".
@@ -320,4 +323,3 @@ This release fixes a dependency problem in our testing system and makes no chang
 
 ## [v0.0.1]
 * First release.
-
