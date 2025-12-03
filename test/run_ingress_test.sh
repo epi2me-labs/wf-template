@@ -2,12 +2,11 @@
 set -exo pipefail
 
 get-test_data-from-aws () {
-    # get aws-cli
-    curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip -q awscliv2.zip
+    # get aws-cli on alpine
+    apk update && apk add aws-cli
 
     # get test data
-    aws/dist/aws s3 cp --recursive --quiet --no-sign-request \
+    aws s3 cp --recursive --quiet --no-sign-request \
         "$S3_TEST_DATA" \
         test_data_from_S3
 }

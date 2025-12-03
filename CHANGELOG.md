@@ -4,13 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v5.6.3]
 ### Added
 - `WorkflowResult` now records the workflow version so that it can be exported alongside the rest of the workflow results, parameters and versions.
 
 ### Changed
 - Reordered README sections so that pipeline overview is before input parameters.
 - "FAQ's" section corrected to "FAQs".
+- Updated common image to 'shabf443fe2f7361981b94a2f53009cbd1d894bac95' to:
+    - Update ezcharts to 0.15.1, changing:
+        - Class name change to `QCStatusBanner` to reflect its usage more clearly
+    - Update fastcat to 0.24.2, adding:
+        - Coverage calculations to `bamstats`
+        - Low complexity read filtering functionality via `fastlint` or `fastcat --dust`
 
 ### Fixed
 - A number of `ingress.nf` docstrings have been updated to include missing parameters. [CW-4027]
