@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Removed
+- The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
+
+
 ## [v5.6.3]
 ### Added
 - `WorkflowResult` now records the workflow version so that it can be exported alongside the rest of the workflow results, parameters and versions.

@@ -42,12 +42,6 @@
                     "description": "Analyse failed reads from input folder. By default the workflow will not process reads in a pod5_fail, bam_fail or fastq_fail sub-folders.",
                     "help_text": "If selected and if the input is a multiplex folder the workflow will also process pod5_fail, bam_fail and fastq_fail folders."
                 },
-                "watch_path": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable to continuously watch the input directory for new input files.",
-                    "help_text": "This option enables the use of Nextflow\u2019s directory watching feature to constantly monitor input directories for new files."
-                },
                 "client_fields": {
                     "type": "string",
                     "format": "file-path",
