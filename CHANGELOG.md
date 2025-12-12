@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
 
+### Added
+- `.github/workflows/issue-autoreply.yml`, allowing for it be enforced in CI.
 
 ## [v5.6.3]
 ### Added
