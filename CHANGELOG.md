@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v5.7.0]
 ### Removed
 - The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
+
 ### Changed
+- CHANGELOG to be compliant with our formatting rules.
 - Updated common image to `shafdd79f8e4a6faad77513c36f623693977b92b08e` to:
     - Update ezcharts to 0.15.2, fixing:
         - Software dependency incompatibilities between the MSA plotting tool `pymsaviz` and `biopython`
@@ -339,4 +341,4 @@ This release fixes a dependency problem in our testing system and makes no chang
 - Create pre-releases in CI from dev branch.
 
 ## [v0.0.1]
-* First release.
+First release.
