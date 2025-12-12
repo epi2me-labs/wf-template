@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v5.7.0]
 ### Removed
 - The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
+### Changed
+- Updated common image to `shafdd79f8e4a6faad77513c36f623693977b92b08e` to:
+    - Update ezcharts to 0.15.2, fixing:
+        - Software dependency incompatibilities between the MSA plotting tool `pymsaviz` and `biopython`
 
 ### Added
 - `.github/workflows/issue-autoreply.yml`, allowing for it be enforced in CI.
@@ -18,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Reordered README sections so that pipeline overview is before input parameters.
 - "FAQ's" section corrected to "FAQs".
-- Updated common image to 'shabf443fe2f7361981b94a2f53009cbd1d894bac95' to:
+- Updated common image to `shabf443fe2f7361981b94a2f53009cbd1d894bac95` to:
     - Update ezcharts to 0.15.1, changing:
         - Class name change to `QCStatusBanner` to reflect its usage more clearly
     - Update fastcat to 0.24.2, adding:
