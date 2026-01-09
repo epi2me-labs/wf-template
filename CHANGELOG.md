@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Removed
+- Workflow parameters `fastcat_stats` and `bamstats`.
+- Ingress `stats` argument (skip summary read stats is no longer optional).
+
+### Changed
+- Ingress now always generates and outputs summary read statistics.
+
 ## [v5.7.0]
 ### Removed
 - The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
