@@ -181,7 +181,6 @@ def test_stats_present(prepare):
             # this sample sheet entry had no input dir (or no reads)
             continue
         if output_type == "fastq":
-            expect_stats = params["wf"]["fastcat_stats"]
             stats_dir_name = "fastcat_stats"
             stats_file_names = [
                 "per-file-stats.tsv",
@@ -192,8 +191,6 @@ def test_stats_present(prepare):
             if params["wf"]["per_read_stats"]:
                 stats_file_names.append("per-read-stats.tsv.gz")
         else:
-            # `bamstats` we only expect when they were requested
-            expect_stats = params["wf"]["bamstats"]
             stats_dir_name = "bamstats_results"
             stats_file_names = [
                 "bamstats.flagstat.tsv",
@@ -207,13 +204,12 @@ def test_stats_present(prepare):
                 stats_file_names.append("bamstats.readstats.tsv.gz")
         stats_dir = ingress_results_dir / meta["alias"] / stats_dir_name
         # assert that stats are there when we expect them
-        assert expect_stats == stats_dir.exists()
+        assert stats_dir.exists()
         # make sure that the per-file stats, per-read stats, and run ID files are there
-        if expect_stats:
-            for fname in stats_file_names:
-                assert (
-                    ingress_results_dir / meta["alias"] / stats_dir_name / fname
-                ).is_file()
+        for fname in stats_file_names:
+            assert (
+                ingress_results_dir / meta["alias"] / stats_dir_name / fname
+            ).is_file()
 
 
 def test_metamap(prepare):
@@ -227,7 +223,7 @@ def test_metamap(prepare):
         )
         # The stats dir might be missing; this happens in four cases:
         # 1. The sample was only present in the sample sheet.
-        # 2. The sample had input data, but fastcat / bamstats was not run.
+        # 2. The sample had input data, but no reads.
         # 3. The sample had more than one basecall model and
         #    `--wf.allow_multiple_basecall_models` was `false`.
         # 4. The sample was uBAM and `--wf.keep_unaligned` was false.
