@@ -1,5 +1,6 @@
 """Test the results_schema and results_schema_helper scripts."""
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 import pytest
 from workflow_glue.models.common import Sample, SampleType
@@ -137,6 +138,36 @@ def test_sci_notation(mass):
     assert mass.get_reportable_value("mass_all") == "1.00E-07 ng"
     mass = Mass(mass_all=100000000)
     assert mass.get_reportable_value("mass_all") == "1.00E+08 ng"
+
+
+def test_show_unit_parameter(mass):
+    """Test show_unit parameter hides/shows units."""
+    assert mass.get_reportable_value("mass_all", show_unit=True) == "10 ng"
+    assert mass.get_reportable_value("mass_all", show_unit=False) == "10"
+
+
+def test_decimal_handling():
+    """Test that Decimal values are converted to scientific notation."""
+    mass = Mass(mass_all=Decimal("0.00064384309642246436832663247784580562438350"))
+    assert mass.get_reportable_value("mass_all") == "6.44E-4 ng"
+
+    mass = Mass(mass_all=Decimal("123456789.123456789"))
+    assert mass.get_reportable_value("mass_all") == "1.23E+8 ng"
+
+
+def test_decimal_places_in_scientific_notation():
+    """Test that decimal_places controls precision in scientific notation."""
+    # Test with Decimal
+    mass = Mass(mass_all=Decimal("0.000643843096422464"))
+    assert mass.get_reportable_value("mass_all", decimal_places=2) == "6.44E-4 ng"
+    assert mass.get_reportable_value("mass_all", decimal_places=4) == "6.4384E-4 ng"
+    assert mass.get_reportable_value("mass_all", decimal_places=0) == "6E-4 ng"
+    # Test with float in scientific notation range
+    mass = Mass(mass_all=0.00005)
+    assert mass.get_reportable_value("mass_all", decimal_places=3) == "5.000E-05 ng"
+    assert mass.get_reportable_value("mass_all", decimal_places=1) == "5.0E-05 ng"
+    mass = Mass(mass_all=123456789.123)
+    assert mass.get_reportable_value("mass_all", decimal_places=3) == "1.235E+08 ng"
 
 
 def test_load_client_fields(workflow, test_data):

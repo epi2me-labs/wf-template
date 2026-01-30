@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Workflow parameters `fastcat_stats` and `bamstats`.
 - Ingress `stats` argument (skip summary read stats is no longer optional).
+- Update the `get_reportable_value` function:
+    - Add support for Decimal values 
+    - Unit display after the value is optional
+    - The number of digits displayed in scientific notation can be specified using the `decimal_places` parameter
 
 ### Changed
 - Ingress now always generates and outputs summary read statistics.
