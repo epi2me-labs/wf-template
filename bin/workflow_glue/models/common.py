@@ -118,6 +118,10 @@ class CheckResult:
         metadata={
             "title": "Check pass",
             "description": "If true the check has passed"})
+    check_messages: list | None = field(
+        default=None, metadata={
+            "title": "Check messages",
+            "description": "A list of messages about the check performed"})
     check_threshold: str | None = field(
         default=None, metadata={
             "title": "Check threshold",
