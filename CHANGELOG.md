@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Ingress now always generates and outputs summary read statistics.
 
+### Added
+- A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
+
 ## [v5.7.0]
 ### Removed
 - The `watch_path` option has been removed from ingress as it is no longer required following its removal from wf-metagenomics.
