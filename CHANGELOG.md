@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Ingress now always generates and outputs summary read statistics.
+- NfCoreSchema resolves entrypoint schemas if `params.wf.entrypoint` is set [CW-6977].
 
 ### Added
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
+- `CWUtil.getEntrypoint` to safely get the workflow entrypoint from the Nextflow params map [CW-6977].
 
 ## [v5.7.0]
 ### Removed
