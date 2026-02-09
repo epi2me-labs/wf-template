@@ -41,7 +41,7 @@ ARM processor support: True
 
 These are instructions to install and run the workflow on command line.
 You can also access the workflow via the
-[EPI2ME Desktop application](https://labs.epi2me.io/downloads/).
+[EPI2ME Desktop application](https://epi2me.nanoporetech.com/downloads/).
 
 The workflow uses [Nextflow](https://www.nextflow.io/) to manage
 compute and software resources,
@@ -61,7 +61,8 @@ parameter as exemplified below.
 It is not required to clone or download the git repository
 in order to run the workflow.
 More information on running EPI2ME workflows can
-be found on our [website](https://labs.epi2me.io/wfindex).
+be found in the
+[documentation](https://epi2me.nanoporetech.com/epi2me-docs/wfquickstart/).
 
 The following command can be used to obtain the workflow.
 This will pull the repository in to the assets folder of
@@ -90,19 +91,6 @@ nextflow run epi2me-labs/wf-template \
 	-profile standard
 ```
 
-For further information about running a workflow on
-the command line see https://labs.epi2me.io/wfquickstart/
-
-
-
-
-## Related protocols
-
-<!---Hyperlinks to any related protocols that are directly related to this workflow, check the community for any such protocols.--->
-
-This workflow is designed to take input sequences that have been produced from [Oxford Nanopore Technologies](https://nanoporetech.com/) devices.
-
-Find related protocols in the [Nanopore community](https://community.nanoporetech.com/docs/).
 
 
 
@@ -289,6 +277,16 @@ Output files may be aggregated including information for all samples or provided
 | BAM index file | xam_ingress_results/{{ alias }}/reads.bam.bai | BAM index file resulting from ingress. | per-sample |
 | Metadata JSON (xam ingress) | xam_ingress_results/reads/metamap.json | Per-sample metadata used in the workflow as JSON. | per-sample |
 
+
+
+
+## Related protocols
+
+<!---Hyperlinks to any related protocols that are directly related to this workflow, check the community for any such protocols.--->
+
+This workflow is designed to take input sequences that have been produced from [Oxford Nanopore Technologies](https://nanoporetech.com/) devices.
+
+Find related protocols in the [Nanopore community](https://community.nanoporetech.com/docs/).
 
 
 
