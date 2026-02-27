@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Removed
+- Workflow parameters `fastcat_stats` and `bamstats`.
+- Ingress `stats` argument (skip summary read stats is no longer optional).
+- Update the `get_reportable_value` function:
+    - Add support for Decimal values 
+    - Unit display after the value is optional
+    - The number of digits displayed in scientific notation can be specified using the `decimal_places` parameter
+
+### Changed
+- Ingress now always generates and outputs summary read statistics.
+- NfCoreSchema resolves entrypoint schemas if `params.wf.entrypoint` is set [CW-6977].
+
+### Added
+- A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
+- `CWUtil.getEntrypoint` to safely get the workflow entrypoint from the Nextflow params map [CW-6977].
+
+
 ## [v5.7.1]
 ### Changed
 - Update documentation pre-commit to use epi2melabs 0.0.62 to:
