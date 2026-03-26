@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
 - `CWUtil.getEntrypoint` to safely get the workflow entrypoint from the Nextflow params map [CW-6977].
 
+### Removed
+- Removed `total_ambiguous_reads` from common.py as it is not a shared field.
+
 
 ## [v5.7.1]
 ### Changed

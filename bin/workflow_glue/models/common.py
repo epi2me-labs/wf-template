@@ -255,10 +255,6 @@ class RunStats:
         default=None, metadata={
             "title": "Total reads",
             "description": "Total number of reads on run"})
-    total_ambiguous_reads: int | None = field(
-        default=None, metadata={
-            "title": "Total ambiguous reads",
-            "description": "Number of reads of unknown provenance"})
     total_unaligned_reads: int | None = field(
         default=None, metadata={
             "title": "Total unaligned reads",
