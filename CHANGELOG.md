@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Ingress now always generates and outputs summary read statistics.
 - NfCoreSchema resolves entrypoint schemas if `params.wf.entrypoint` is set [CW-6977].
+- Updated common image to `sha21d552f9910c575766e5d465fcb7b52fefda4b79`:
+    - Update ezcharts to v0.16.1, adding:
+        - `UpSetPlot` component
+        - `BaseComposition` component
+        - `polya` component
+    - Eliminating dependency on `pkg_resources`
 
 ### Added
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
