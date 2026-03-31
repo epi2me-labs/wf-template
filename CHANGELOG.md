@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - `BaseComposition` component
         - `polya` component
     - Eliminating dependency on `pkg_resources`
+- Updated description of `total_reads` in common.py, to improve clarity.
 
 ### Added
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
