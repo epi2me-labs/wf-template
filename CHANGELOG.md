@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
 - `CWUtil.getEntrypoint` to safely get the workflow entrypoint from the Nextflow params map [CW-6977].
+- Added a `no_barcode` argument to `validate_sample_sheet` for validating sample sheets without barcodes. This option is not exposed to ingress.
 
 ### Removed
 - Removed `total_ambiguous_reads` from common.py as it is not a shared field.

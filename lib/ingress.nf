@@ -1147,7 +1147,8 @@ def get_sample_sheet(Path sample_sheet, ArrayList required_sample_types) {
     // in STDOUT. Thus, we use the somewhat clunky construct with `concat` and `last`
     // below. This lets the CSV channel only start to emit once the error checking is
     // done.
-    ch_err = validate_sample_sheet(sample_sheet, required_sample_types).map { stdoutput, sample_sheet_file ->
+    boolean no_barcode_mode = false  // CW-7025
+    ch_err = validate_sample_sheet(sample_sheet, required_sample_types, no_barcode_mode).map { stdoutput, sample_sheet_file ->
         // check if there was an error message
         if (stdoutput) error "Invalid sample sheet: ${stdoutput}."
         stdoutput
@@ -1201,12 +1202,14 @@ process validate_sample_sheet {
     input:
         path "sample_sheet.csv"
         val required_sample_types
+        val no_barcode
     output:
         tuple stdout, path("sample_sheet.csv")
     script:
     String req_types_arg = required_sample_types ? "--required_sample_types "+required_sample_types.join(" ") : ""
+    String no_barcode_arg = no_barcode ? "--no_barcode" : ""
     """
-    workflow-glue check_sample_sheet sample_sheet.csv $req_types_arg
+    workflow-glue check_sample_sheet sample_sheet.csv $req_types_arg $no_barcode_arg
     """
 }
 
