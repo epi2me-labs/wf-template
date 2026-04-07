@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed `total_ambiguous_reads` from common.py as it is not a shared field.
 
+### Fixed
+- Invalid `configure_igv` arguments caused by unquoted IGV locus strings containing shell metacharacters.
+
 
 ## [v5.7.1]
 ### Changed
