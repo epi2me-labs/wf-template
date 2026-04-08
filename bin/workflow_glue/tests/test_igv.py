@@ -179,6 +179,40 @@ WF_AVA_EXPECTED_IGV_OUT = {
     ],
 }
 
+BIGWIG_FOFN = """reference.fasta
+reference.fasta.fai
+sample A,sample_5mC.bw
+sample A,sampleA.bam
+sample A,sampleA.bam.bai"""
+
+BIGWIG_EXPECTED_IGV_OUT = {
+    "reference": {
+        "id": "ref",
+        "name": "ref",
+        "wholeGenomeView": False,
+        "fastaURL": "reference.fasta",
+        "indexURL": "reference.fasta.fai",
+    },
+    "tracks": [
+        {
+            "name": "sample A: sampleA.bam",
+            "type": "alignment",
+            "format": "bam",
+            "url": "sampleA.bam",
+            "indexURL": "sampleA.bam.bai",
+            "displayMode": "SQUISHED",
+            "colorBy": "strand",
+        },
+        {
+            "name": "sample A: sample_5mC.bw",
+            "type": "wig",
+            "format": "bigwig",
+            "url": "sample_5mC.bw",
+        },
+
+    ],
+}
+
 
 # IGV wf-ava approach
 @pytest.mark.parametrize(
@@ -204,6 +238,12 @@ WF_AVA_EXPECTED_IGV_OUT = {
             WF_AVA_FOFN,
             WF_AVA_ALN_IN,
             WF_AVA_EXPECTED_IGV_OUT,
+            True,
+        ),
+        (
+            BIGWIG_FOFN,
+            DEFAULT_ALN_IN,
+            BIGWIG_EXPECTED_IGV_OUT,
             True,
         ),
     ],
