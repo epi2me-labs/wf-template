@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Invalid `configure_igv` arguments caused by unquoted IGV locus strings containing shell metacharacters.
+- Workflow models enabled outputting of NaN, causing parsing errors downstream.
 
 
 ## [v5.7.1]
