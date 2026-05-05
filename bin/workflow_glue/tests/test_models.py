@@ -190,6 +190,21 @@ def test_load_client_fields_error(test_data):
             "error": "Error parsing client fields file."}
 
 
+def test_to_json_disallows_nan(tmp_path):
+    """Test workflow JSON serialization rejects NaN values."""
+    nan_value = float("nan")
+    workflow = WorkflowResult(
+        samples=[],
+        workflow_checks=[],
+        client_fields={"nan_value": nan_value},
+    )
+    # Confirm value is NaN
+    assert nan_value != nan_value
+    # Confirm error when writing to json
+    with pytest.raises(ValueError):
+        workflow.to_json(tmp_path / "workflow.json")
+
+
 def sample(sample_checks):
     """Create a Sample instance."""
     return Sample(
