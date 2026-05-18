@@ -36,9 +36,10 @@ fi
 # get test data from s3 if required
 if [[ $input_path =~ ^s3:// ]]; then
     get-test_data-from-aws
-    input_path="$PWD/test_data_from_S3/${input_path#*test_data/}"
+    input_path="$PWD/test_data_from_S3/${input_path#"${S3_TEST_DATA%/}/"}"
+    relative_path="${input_path#${S3_TEST_DATA%/}/}"
     [[ -n $sample_sheet ]] &&
-        sample_sheet="$PWD/test_data_from_S3/${sample_sheet#*test_data/}"
+        sample_sheet="$PWD/test_data_from_S3/${sample_sheet#"${S3_TEST_DATA%/}/"}"
 fi
 
 # add CWD if paths are relative
