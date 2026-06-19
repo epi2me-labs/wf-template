@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Workflow models enabled outputting of NaN, causing parsing errors downstream.
+
 ## [v6.0.0]
 ### Removed
 - Workflow parameters `fastcat_stats` and `bamstats`.
@@ -33,8 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Invalid `configure_igv` arguments caused by unquoted IGV locus strings containing shell metacharacters.
-- Workflow models enabled outputting of NaN, causing parsing errors downstream.
-
 
 ## [v5.7.1]
 ### Changed
