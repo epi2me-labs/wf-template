@@ -3,10 +3,12 @@ import json
 
 from dominate.tags import b, p
 from ezcharts.components import fastcat
+from ezcharts.components.lead_summary import lead_section_table
 from ezcharts.components.reports import labs
 from ezcharts.layout.snippets import Tabs
 from ezcharts.layout.snippets.table import DataTable
 import pandas as pd
+from workflow_glue.models.common import WorkflowResult
 
 from .util import get_named_logger, wf_parser  # noqa: ABS101
 
@@ -50,29 +52,17 @@ def main(args):
                 "."
             )
 
-    client_fields = None
+    workflow = WorkflowResult(
+        samples=[]
+    )
+
     if args.client_fields:
-        with open(args.client_fields) as f:
-            try:
-                client_fields = json.load(f)
-            except json.decoder.JSONDecodeError:
-                error = "ERROR: Client info is not correctly formatted"
+        workflow.load_client_fields(args.client_fields)
 
         with report.add_section("Workflow Metadata", "Workflow Metadata"):
-            if client_fields:
-                df = pd.DataFrame.from_dict(
-                    client_fields, orient="index", columns=["Value"])
-                df.index.name = "Key"
-
-                # Examples from the client had lists as values so join lists
-                # for better display
-                df['Value'] = df.Value.apply(
-                    lambda x: ', '.join(
-                        [str(i) for i in x]) if isinstance(x, list) else x)
-
-                DataTable.from_pandas(df)
-            else:
-                p(error)
+            lead_section_table(
+                lead_fields={},
+                client_fields=workflow.client_fields)
 
     if args.stats:
         with report.add_section("Read summary", "Read summary"):

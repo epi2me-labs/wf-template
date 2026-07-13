@@ -305,7 +305,7 @@ docker-run:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case17 --sample_sheet test_data/fastq_ingress/case17/sample_sheet.csv --client_fields test_data/fastq_ingress/case17/client_fields.json"
               AFTER_NEXTFLOW_CMD: >
                 $TEST_CMD test_data/fastq_ingress/case17 fastq $$PWD/$$CI_PROJECT_NAME
-                && grep "ERROR: Client info is not correctly formatted" $$PWD/$$CI_PROJECT_NAME/wf-template-report.html
+                && grep "ERROR: Error parsing client fields file." $$PWD/$$CI_PROJECT_NAME/wf-template-report.html
 
         - if: $MATRIX_NAME == "case18"
           variables:

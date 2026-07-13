@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Workflow models enabled outputting of NaN, causing parsing errors downstream.
+### Changed
+- Detect and format date/time values in client fields.
 
 ## [v6.0.0]
 ### Removed
