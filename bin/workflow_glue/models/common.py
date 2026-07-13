@@ -1,5 +1,6 @@
 """Common model classes used across all workflows."""
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 import json
@@ -319,6 +320,16 @@ class WorkflowResult(WorkflowBaseModel):
                 for key, value in client_fields.items():
                     if isinstance(value, list):
                         client_fields[key] = ', '.join(value)
+                    # convert ISO datetime strings into a friendlier format
+                    elif isinstance(value, str):
+                        try:
+                            dt = datetime.fromisoformat(value)
+                            if dt.tzinfo is not None:
+                                dt = dt.astimezone(timezone.utc)
+                            client_fields[key] = dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        except ValueError:
+                            # not an ISO datetime string
+                            pass
             except json.decoder.JSONDecodeError:
                 client_fields = {"error": "Error parsing client fields file."}
 
