@@ -53,7 +53,11 @@ class WorkflowBaseModel:
 
         if isinstance(value, (int, float, Decimal)):
             # Apply scientific notation for Decimal or small/large int/float
-            if isinstance(value, Decimal) or value < 0.0001 or value > 99999999:
+            # Avoid formatting 0 to 0.00E+00
+            if (
+                value != 0 and
+                (isinstance(value, Decimal) or value < 0.0001 or value > 99999999)
+            ):
                 precision = decimal_places if decimal_places is not None else 2
                 value = f"{value:.{precision}E}"
             # Otherwise, apply rounding

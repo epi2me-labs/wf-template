@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow models enabled outputting of NaN, causing parsing errors downstream.
 ### Changed
 - Detect and format date/time values in client fields.
+- Updated the `get_reportable_value` function to avoid "0" values being converted to "0.00E+00".
 - Capitalise client field labels for improved UI consistency.
+
 
 ## [v6.0.0]
 ### Removed
