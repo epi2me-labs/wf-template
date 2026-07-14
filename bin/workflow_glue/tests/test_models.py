@@ -170,6 +170,21 @@ def test_decimal_places_in_scientific_notation():
     assert mass.get_reportable_value("mass_all", decimal_places=3) == "1.235E+08 ng"
 
 
+def test_zero_not_scientific_notation():
+    """Zero should never be rendered in scientific notation, even as a Decimal."""
+    # Plain int/float zero
+    mass = Mass(mass_all=0)
+    assert mass.get_reportable_value("mass_all") == "0 ng"
+    mass = Mass(mass_all=0.0)
+    assert mass.get_reportable_value("mass_all") == "0.0 ng"
+
+    # Decimal zero
+    mass = Mass(mass_all=Decimal("0"))
+    assert mass.get_reportable_value("mass_all") == "0 ng"
+    mass = Mass(mass_all=Decimal("0"))
+    assert mass.get_reportable_value("mass_all", decimal_places=2) == "0.00 ng"
+
+
 def test_load_client_fields(workflow, test_data):
     """Test client field loading."""
     assert workflow.load_client_fields(
