@@ -174,15 +174,15 @@ def test_load_client_fields(workflow, test_data):
     """Test client field loading."""
     assert workflow.load_client_fields(
         f"{test_data}/workflow_glue/client_fields.json") == {
-            "operator": "Dwight Schrute",
-            "requester": "Michael Scott",
-            "organisation": "Dunder Mifflin",
-            "sequencer": "GridION",
-            "location": "Scranton",
-            "interests": "bears, beets, battlestar",
-            "date started (utc)": "2025-05-28 14:36:14 UTC",
-            "date started (offset)": "2025-05-28 13:36:14 UTC",
-            "date started (with space)": "2026-07-02 13:49:02 UTC"}
+            "Operator": "Dwight Schrute",
+            "Requester": "Michael Scott",
+            "Organisation": "Dunder Mifflin",
+            "Sequencer": "GridION",
+            "Location": "Scranton",
+            "Interests": "bears, beets, battlestar",
+            "Date started (utc)": "2025-05-28 14:36:14 UTC",
+            "Date started (offset)": "2025-05-28 13:36:14 UTC",
+            "Date started (with space)": "2026-07-02 13:49:02 UTC"}
 
 
 def test_load_client_fields_error(test_data):

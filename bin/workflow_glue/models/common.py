@@ -330,6 +330,11 @@ class WorkflowResult(WorkflowBaseModel):
                         except ValueError:
                             # not an ISO datetime string
                             pass
+                # capitalise field names for display
+                client_fields = {
+                    key.capitalize(): value
+                    for key, value in client_fields.items()
+                }
             except json.decoder.JSONDecodeError:
                 client_fields = {"error": "Error parsing client fields file."}
 
