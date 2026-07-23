@@ -17,10 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Workflow parameters `fastcat_stats` and `bamstats`.
 - Ingress `stats` argument (skip summary read stats is no longer optional).
-- Update the `get_reportable_value` function:
-    - Add support for Decimal values 
-    - Unit display after the value is optional
-    - The number of digits displayed in scientific notation can be specified using the `decimal_places` parameter
 - Removed `total_ambiguous_reads` from common.py as it is not a shared field.
 
 ### Changed
@@ -33,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - `polya` component
     - Eliminating dependency on `pkg_resources`
 - Updated description of `total_reads` in common.py, to improve clarity.
+- Update the `get_reportable_value` function:
+    - Add support for Decimal values
+    - Unit display after the value is optional
+    - The number of digits displayed in scientific notation can be specified using the `decimal_places` parameter
 
 ### Added
 - A `check_messages` attribute to the `check_result` class to allow error messages to be recorded with a check
