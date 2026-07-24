@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the `get_reportable_value` function to avoid "0" values being converted to "0.00E+00".
 - Capitalise client field labels for improved UI consistency.
 - Enforce regex for sample sheet alias value as per the [Output Specification](https://nanoporetech.github.io/ont-output-specifications/latest/protocol_formats/sample_sheet/).
+- Updated common image to `shaf98a224e07799dc5df2e5a364d51333f52fc0f4e`:
+    - Update ezcharts to v0.16.2:
+        - Changes to Poly(A) tail calculations
+        - Fixing `UpSetPlot` overlapping labels
+        - Additional customised table functionality
 ### Fixed
 - Workflow models enabled outputting of NaN, causing parsing errors downstream.
 
