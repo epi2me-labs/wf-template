@@ -14,9 +14,8 @@ import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
 
 include { fastq_ingress; xam_ingress } from './lib/ingress'
-include {
-    getParams;
-} from './lib/common'
+include { getParams } from './lib/common'
+include { prepare_reference } from './lib/reference'
 
 
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
@@ -180,6 +179,22 @@ WorkflowMain.initialise(workflow, params, log)
 workflow {
 
     Pinguscript.ping_start(nextflow, workflow, params)
+    
+    // If alignment reference provided prepare alignment reference Channel
+    if (params.reference){
+        // Update args for the requirements of your workflow
+        reference =  prepare_reference(
+            params.reference, [
+            "output_cache": true,
+            "output_mmi": false,
+            "mmi_opts": "-x lr:hq",
+            "mmi_memory": ["8G", "15G", "31G"],  
+            ])
+        ref = reference.ref_tuple
+    } else {
+        // If alignment is not relevant for a workflow DEVS can just set ref to null
+        ref = null
+    }
 
     def samples
     if (params.fastq) {
@@ -194,7 +209,11 @@ workflow {
             "fastq_chunk": params.fastq_chunk,
             "per_read_stats": params.wf.per_read_stats,
             "allow_multiple_basecall_models": params.wf.allow_multiple_basecall_models,
-        ])
+            "minimap2_memory": ["8GB", "15GB", "31GB"],
+            "minimap2_opts": "-x lr:hq",
+            "alignment_threads": 6,
+            "output_xam_fmt": params.output_xam_fmt
+        ], ref)
     } else {
         // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
         // by the schema)
@@ -209,7 +228,12 @@ workflow {
             "fastq_chunk": params.fastq_chunk,
             "per_read_stats": params.wf.per_read_stats,
             "allow_multiple_basecall_models": params.wf.allow_multiple_basecall_models,
-        ])
+            "minimap2_memory": ["8GB", "15GB", "31GB"],
+            "minimap2_opts": "-x lr:hq",
+            "alignment_threads": 6,
+            "output_xam_fmt": params.output_xam_fmt,
+            "force_alignment": params.wf.force_alignment
+        ], ref)
     }
 
     // group back the possible multiple fastqs from the chunking. In
@@ -218,7 +242,7 @@ workflow {
     // will give us a file list of `[null]` for missing samples, reduce
     // this back to `null`.
     def decorate_samples
-    if (params.wf.return_fastq || params.fastq) {
+    if ((params.wf.return_fastq || params.fastq) && !params.reference) {
         decorate_samples = samples
             .map {meta, fname, stats ->
                 [meta["group_key"], meta, fname, stats]}
@@ -236,7 +260,7 @@ workflow {
 
     pipeline(decorate_samples)
     ch_to_publish = pipeline.out.ingress_results
-        | map { [it, "${params.fastq ? "fastq" : "xam"}_ingress_results"] }
+        | map { [it, "${params.fastq && !params.reference ? "fastq" : "xam"}_ingress_results"] }
 
     ch_to_publish | publish
 }

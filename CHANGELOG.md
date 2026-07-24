@@ -5,12 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Fixed
-- Workflow models enabled outputting of NaN, causing parsing errors downstream.
+### Added
+- Optional alignment of input BAM or FASTQ reads using minimap2, managed by the ingress module.
+  - New `reference` parameter to specify the reference FASTA file for alignment.
+  - New `reference.nf` script to prepare a reference channel from an input `reference`.
+  - When `reference` is provided, `reference.nf` will pre-process the reference genome and generate required indexes and cache.
+  - When `reference` is set, `ingress.nf` will align input BAM or FASTQ reads; alignment is skipped if the BAM is already aligned to the provided reference or if there are no reads for a sample.
+  - After alignment, `fastcat bamstats` is used to generate statistics output.
+  - New ingress input map arguments: `minimap2_opts`, `alignment_threads` and `output_xam_fmt` for per workflow configuration by developers.
+- Sample sheet validation has moved to modules in `bin/workflow_glue/wfg_helpers/validators/`; each module can define one or more validator classes.
 ### Changed
 - Detect and format date/time values in client fields.
 - Updated the `get_reportable_value` function to avoid "0" values being converted to "0.00E+00".
 - Capitalise client field labels for improved UI consistency.
+- Enforce regex for sample sheet alias value as per the [Output Specification](https://nanoporetech.github.io/ont-output-specifications/latest/protocol_formats/sample_sheet/).
+### Fixed
+- Workflow models enabled outputting of NaN, causing parsing errors downstream.
 
 
 ## [v6.0.0]

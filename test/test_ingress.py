@@ -56,8 +56,23 @@ def args():
 
     input_type = args.type
     wf_output_dir = Path(args.wf_output_dir)
+
+    # get the workflow params
+    with open(wf_output_dir / "params.json", "r") as f:
+        params = json.load(f)
+    input_path = (
+        Path(args.input) if args.input is not None else ROOT_DIR / params[input_type]
+    )
+    # Determine final output type
+    if params.get("reference") is not None:
+        # Alignment was performed, output is BAM or CRAM
+        output_type = params.get("output_xam_fmt")
+    else:
+        # Same as input type
+        output_type = input_type
+    # TODO: if wf.return_fastq is true workflow still will name output folder xam_ingress should we change this to fastq?
     ingress_results_dir = (
-        wf_output_dir / f"{'xam' if input_type == 'bam' else 'fastq'}_ingress_results"
+        wf_output_dir / f"{'fastq' if output_type == 'fastq' else 'xam'}_ingress_results"
     )
 
     # make sure that there are ingress results (i.e. that the workflow has been
@@ -66,24 +81,25 @@ def args():
         raise ValueError(
             f"{ingress_results_dir} does not exist. Has `wf-template` been run?"
         )
+    
+    if params["wf"].get("return_fastq", False) and params.get("reference") is None:
+        # Explicitly return FASTQ regardless of input
+        output_type = "fastq"
 
-    # get the workflow params
-    with open(wf_output_dir / "params.json", "r") as f:
-        params = json.load(f)
-    input_path = (
-        Path(args.input) if args.input is not None else ROOT_DIR / params[input_type]
-    )
     sample_sheet = args.sample_sheet
     if sample_sheet is None and params["sample_sheet"] is not None:
         sample_sheet = ROOT_DIR / params["sample_sheet"]
 
-    # Define output type
-    output_type = input_type
-    if params["wf"]["return_fastq"]:
-        output_type = "fastq"
-
     if not input_path.exists():
         raise ValueError(f"Input path '{input_path}' does not exist.")
+    
+    ref = params.get("reference")
+    if ref is not None:
+        refp = Path(ref)
+        if not refp.is_absolute():
+            # interpret relative paths as relative to ROOT_DIR
+            refp = ROOT_DIR / refp
+        params["reference"] = refp.as_posix()
 
     return input_path, input_type, output_type, sample_sheet, ingress_results_dir, args.chunk, params
 
@@ -132,6 +148,8 @@ def test_names_run_ids_and_basecallers(prepare):
             res_seqs_fname = "seqs.fastq.gz"
         elif output_type == "bam":
             res_seqs_fname = "reads.bam"
+        elif output_type == "cram": 
+            res_seqs_fname = "reads.cram"
         else:
             raise ValueError(f"Unknown output_type: {output_type}.")
 
@@ -235,8 +253,23 @@ def test_metamap(prepare):
             len(meta["basecall_models"]) > 1
             and not params["wf"]["allow_multiple_basecall_models"]
         )
-        clear_stats_info = (stats_dir_missing and not too_many_basecall_models) or (
-            meta.get("is_unaligned") and not params["wf"]["keep_unaligned"]
+
+        clear_due_to_missing_stats = (
+            stats_dir_missing and not too_many_basecall_models
+        )
+
+        is_unaligned = meta.get("is_unaligned", False)
+        keep_unaligned = params["wf"]["keep_unaligned"]
+        is_aligning = params["reference"] is not None
+
+        clear_due_to_dropped_input = (
+            is_unaligned
+            and not keep_unaligned
+            and not is_aligning
+        )
+
+        clear_stats_info = (
+            (clear_due_to_missing_stats or clear_due_to_dropped_input)
         )
 
         expected_meta = util.amend_meta_for_output(
@@ -254,6 +287,19 @@ def test_metamap(prepare):
                 expected_meta[key_of_set] = sorted(expected_meta[key_of_set])
                 actual_meta[key_of_set] = sorted(actual_meta[key_of_set])
 
+        # If alignment was performed update some expected fields
+        if output_type in ("bam", "cram") and params["reference"] is not None:
+            unpredictable_alignment_fields = {"n_primary", "n_unmapped"}
+            for f in unpredictable_alignment_fields:
+                expected_meta.pop(f, None)
+                actual_meta.pop(f, None)
+            # Unaligned will become False unless input has no reads
+            if expected_meta.get("is_unaligned") and expected_meta.get("alias") != "just_header":
+                expected_meta["is_unaligned"] = False
+            # If input is fastq src_xam will be None
+            if input_type == "fastq":
+                expected_meta["src_xam"] = None
+            
         # validate
         assert expected_meta == actual_meta
 
@@ -282,7 +328,7 @@ def test_reads_sorted(prepare):
 
 
 def test_reads_index(prepare):
-    """If input type is BAM, check that the BAI index exists."""
+    """If input type is XAM, check that the XAI index exists."""
     ingress_results_dir, input_type, output_type, valid_inputs, chunk_size, params = prepare
     if output_type == "fastq":
         return
@@ -291,13 +337,20 @@ def test_reads_index(prepare):
             # this sample sheet entry had no input dir (or no reads)
             continue
         # Create BAI file path
-        bai_file = (
-            ingress_results_dir
-            / meta["alias"]
-            / 'reads.bam.bai'
-        )
-        if not bai_file.is_file():
-            raise ValueError(f"Missing index: {bai_file.as_posix()}.")
+        if params["output_xam_fmt"] == "bam":
+            index_file = (
+                ingress_results_dir
+                / meta["alias"]
+                / 'reads.bam.bai'
+            )
+        else:
+            index_file = (
+                ingress_results_dir
+                / meta["alias"]
+                / 'reads.cram.crai'
+            )
+        if not index_file.is_file():
+            raise ValueError(f"Missing index: {index_file.as_posix()}.")
 
 
 if __name__ == "__main__":
