@@ -21,13 +21,13 @@ This workflow can be used for the following:
 
 Recommended requirements:
 
-+ CPUs = 2
-+ Memory = 2GB
++ CPUs = 12
++ Memory = 16GB
 
 Minimum requirements:
 
-+ CPUs = 2
-+ Memory = 2GB
++ CPUs = 6
++ Memory = 8GB
 
 Approximate run time: 5 minutes per sample
 
@@ -238,6 +238,13 @@ The [fastcat/bamstats](https://github.com/epi2me-labs/fastcat) tool is used to c
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all workflow results. |  | output |
+
+
+### Alignment Options
+
+| Nextflow parameter name  | Type | Description | Help | Default |
+|--------------------------|------|-------------|------|---------|
+| reference | string | Path to a reference FASTA file for alignment. If a reference is provided and the input is not already aligned to it, the workflow will attempt alignment using that reference. | Only required if inputs are unaligned. |  |
 
 
 

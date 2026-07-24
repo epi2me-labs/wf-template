@@ -1,0 +1,3 @@
+name,type,condition
+test_name1,test_sample,condition1
+test_name2,positive_control,condition2

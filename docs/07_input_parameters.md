@@ -24,3 +24,10 @@
 | out_dir | string | Directory for output of all workflow results. |  | output |
 
 
+### Alignment Options
+
+| Nextflow parameter name  | Type | Description | Help | Default |
+|--------------------------|------|-------------|------|---------|
+| reference | string | Path to a reference FASTA file for alignment. If a reference is provided and the input is not already aligned to it, the workflow will attempt alignment using that reference. | Only required if inputs are unaligned. |  |
+
+

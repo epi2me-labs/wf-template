@@ -9,16 +9,28 @@ import pysam
 INPUT_TYPES_EXTENSIONS = {
     "fastq": ["fastq", "fastq.gz", "fq", "fq.gz"],
     "bam": ["bam", "ubam"],
+    "cram": ["cram"]
 }
 
+def open_xam(path, params):
+    """XAM file opener."""
+    path = Path(path)
+    ref = None
+    if params:
+        ref = params.get("reference")
+    # Only pass reference for CRAM, so it doesn't make a cache which hangs in CI
+    if path.suffix == ".cram" and ref:
+        return pysam.AlignmentFile(str(path), check_sq=False, reference_filename=str(ref))
+    return pysam.AlignmentFile(str(path), check_sq=False)
 
-def validate_xam_index(xam_file):
+
+def validate_xam_index(xam_file, params=None):
     """Use fetch to validate the index.
 
     Invalid indexes will fail the call with a ValueError:
     ValueError: fetch called on bamfile without index
     """
-    with pysam.AlignmentFile(xam_file, check_sq=False) as alignments:
+    with open_xam(xam_file, params or {}) as alignments:
         try:
             alignments.fetch()
             has_valid_index = True
@@ -69,7 +81,7 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
     :param path: can be a single target file, a list of target files, or a directory
         containing target files.
     :param input_type: can either be "fastq" or "bam"
-    :param output_type: either "fastq" or "bam"; is "fastq" when `xam_ingress` was run
+    :param output_type: either "fastq", "bam" or "cram"; is "fastq" when `xam_ingress` was run
         with `--return_fastq`
 
     For FASTQ files, the run IDs can be present in the header lines in the format
@@ -99,12 +111,14 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
     n_primary = 0
     n_unmapped = 0
     src_xam = None
+    has_splice_cigars = False
+    has_modbase_tags = False
     # Ensure that there is a single file, and that it is not s3
     if len(target_files) == 1 and 'test_data_from_S3' not in target_files[0].as_posix():
         src_xam = target_files[0].as_posix()
     src_xai = None
     if src_xam:
-        if Path(src_xam + '.bai').exists() and validate_xam_index(src_xam):
+        if Path(src_xam + '.bai').exists() and validate_xam_index(src_xam, params):
             src_xai = src_xam + '.bai'
     basecall_models = set()
     for file in target_files:
@@ -148,7 +162,7 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
                         basecall_models.add(basecall_model)
         else:
             unaligned = is_unaligned(file, params)
-            with pysam.AlignmentFile(file, check_sq=False) as f:
+            with open_xam(file, params) as f:
                 xam_sorted = f.header.get('HD', {}).get('SO') == 'coordinate'
                 # Check if the data are aligned
                 if not unaligned and not xam_sorted:
@@ -163,6 +177,9 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
                     rg_runid = None
                     rg_basecall_model = None
                     for ds_kv in read_group.get("DS", "").split():
+                        # DS might not have any key value pairs
+                        if "=" not in ds_kv:
+                            continue
                         k, v = ds_kv.split("=", 1)
                         if k == "runid":
                             rg_runid = v
@@ -177,11 +194,19 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
                     # Just take unmapped reads and primary alignments
                     if entry.is_unmapped:
                         n_unmapped += 1
+                        names.append(entry.query_name)
                     else:
                         if not (entry.is_secondary or entry.is_supplementary):
                             n_primary += 1
-                    run_id = dict(entry.tags).get("RD")
-                    names.append(entry.query_name)
+                            names.append(entry.query_name)
+                    tags = dict(entry.tags)
+                    if not has_splice_cigars:
+                        has_splice_cigars = any(
+                            op == 3 for op, _ in (entry.cigartuples or [])
+                        )
+                    if not has_modbase_tags:
+                        has_modbase_tags = "MM" in tags and "ML" in tags
+                    run_id = tags.get("RD")
                     if run_id is not None:
                         run_ids.add(run_id)
                 # looks like RG.IDs have collided without merging (CW-4608)
@@ -204,6 +229,9 @@ def create_preliminary_meta(path, input_type, output_type, params=None):
         prel_meta["n_unmapped"] = n_unmapped
         prel_meta["src_xam"] = src_xam
         prel_meta["src_xai"] = src_xai
+    if input_type == "bam":
+        prel_meta["has_splice_cigars"] = has_splice_cigars
+        prel_meta["has_modbase_tags"] = has_modbase_tags
 
     return prel_meta
 
@@ -228,7 +256,7 @@ def amend_meta_for_output(meta, output_type, chunk_size, clear_stats_info):
         meta["basecall_models"] = []
         if output_type == "fastq":
             meta["n_seqs"] = None
-        elif output_type == "bam":
+        elif output_type in ("bam", "cram"):
             meta['src_xam'] = None
             meta['src_xai'] = None
             meta["n_primary"] = None
@@ -271,7 +299,7 @@ def is_unaligned(path, params):
 
     first_sq_lines = None
     for target_file in target_files:
-        with pysam.AlignmentFile(target_file, check_sq=False) as f:
+        with open_xam(target_file, params) as f:
             sq_lines = [{
                 "SN": sq["SN"],
                 "LN": sq["LN"],
