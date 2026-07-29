@@ -145,8 +145,7 @@
 │   └── reads2.bam
 
 # Case20: BAM from SAM with just a header
-├── case20
-│   ├── just_header.bam
+└── empty-zero-reads.bam
 
 # experiment layout [CW-4785]
 # xam-case21-exp-no-files: Check case where no files are ingested.
@@ -246,3 +245,75 @@ case23
 └── sample_sheet_sample_notindir.csv
 
 # case24 use sample sheet, supply a conflicting barcode and alias dir for the same sample row
+case24
+├── barcode01
+│   ├── YYYYMMDD_HHMM_0A_FLO00000_00000000
+│   │   └── barcode01
+│   │       ├── bam_fail
+│   │       │   └── reads0.bam
+│   │       └── bam_pass
+│   │           └── reads0.bam
+│   ├── YYYYMMDD_HHMM_0B_FLO11111_11111111
+│   │   └── barcode02
+│   │       ├── bam_fail
+│   │       │   └── reads1.bam
+│   │       └── bam_pass
+│   │           └── reads1.bam
+│   └── YYYYMMDD_HHMM_0C_FLO22222_22222222
+│       └── unclassified
+│           ├── bam_fail
+│           │   └── reads2.bam
+│           └── bam_pass
+│               └── reads2.bam
+├── sample1
+│   ├── YYYYMMDD_HHMM_0A_FLO00000_00000000
+│   │   └── barcode01
+│   │       ├── bam_fail
+│   │       │   └── reads0.bam
+│   │       └── bam_pass
+│   │           └── reads0.bam
+│   ├── YYYYMMDD_HHMM_0B_FLO11111_11111111
+│   │   └── barcode02
+│   │       ├── bam_fail
+│   │       │   └── reads1.bam
+│   │       └── bam_pass
+│   │           └── reads1.bam
+│   └── YYYYMMDD_HHMM_0C_FLO22222_22222222
+│       └── unclassified
+│           ├── bam_fail
+│           │   └── reads2.bam
+│           └── bam_pass
+│               └── reads2.bam
+└── sample_sheet_conflict.csv
+
+
+# case27 BAM input without any contents 
+└──empty-zero-bytes.bam
+
+# case28 malformed BAM input
+case28
+└── barcode01
+    └── malformed.bam
+
+# case29 malformed BAM input in a mix with good BAM input under the same barcode 
+# this checks if the rest of input BAMs are discarded if a malformed one is present
+case29
+└── barcode01
+    ├── reads0.bam
+    ├── reads1.bam
+    ├── reads2.bam
+    └── malformed.bam
+
+# case30 malformed BAM input in a mix with good BAM input under the same barcode
+# this checks if failing one barcode results failure for all barcodes
+case30
+├── barcode01
+│   ├── reads0.bam
+│   ├── reads1.bam
+│   ├── reads2.bam
+│   └── malformed.bam
+└── barcode02
+    ├── reads0.bam
+    ├── reads1.bam
+    └── reads2.bam
+
