@@ -249,15 +249,6 @@ def test_compare_ref_lengths(xam_reflen, ref_reflen, expected_result):
             "HAS_MODBASE_TAGS=0",
         ),
         (
-            "corrupt",
-            "IS_UNALIGNED=1",
-            "MIXED_SQ_HEADERS=0",
-            "IS_SORTED=0",
-            "HAS_READS=0",
-            "HAS_SPLICE_CIGARS=0",
-            "HAS_MODBASE_TAGS=0",
-        ),
-        (
             "mixed_headers",
             "IS_UNALIGNED=0",
             "MIXED_SQ_HEADERS=1",
@@ -304,3 +295,23 @@ def test_main(
     assert expected_has_reads in captured.out
     assert expected_has_splice_cigars in captured.out
     assert expected_has_modbase_tags in captured.out
+
+
+def test_main_raises_on_corrupt_bam(capsys, bam_dir, ref_file, ref_idx):
+    """Main should propagate the pysam error for an unparseable/corrupt BAM."""
+    full_path = bam_dir / "corrupt"
+    args = Mock(input_path=full_path, ref=ref_file, ref_idx=ref_idx)
+
+    with pytest.raises(OSError, match="no BGZF EOF marker"):
+        main(args)
+
+
+def test_main_raises_on_empty_bam(tmp_path, ref_file, ref_idx):
+    """Main should propagate the pysam error for a genuinely empty (0-byte) file."""
+    empty_bam = tmp_path / "empty.bam"
+    empty_bam.touch()  # 0 bytes
+
+    args = Mock(input_path=tmp_path, ref=ref_file, ref_idx=ref_idx)
+
+    with pytest.raises(ValueError, match="does not contain alignment data"):
+        main(args)

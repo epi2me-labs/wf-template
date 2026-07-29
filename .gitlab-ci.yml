@@ -108,8 +108,11 @@ docker-run:
                 "unexpected-params",
                 "s3-xam-case25-alignment",
                 "s3-xam-case25-force-alignment",
-                "xam-case26-alignment-empty-bam",
-                "s3-xam-case26-alignment-cram-out"
+                "s3-xam-case26-alignment-cram-out",
+                "xam-case27",
+                "xam-case28",
+                "xam-case29",
+                "xam-case30"
               ]
     rules:
         # NOTE As we're overriding the rules block for the included docker-run
@@ -662,8 +665,8 @@ docker-run:
 
         - if: $MATRIX_NAME == "xam-case20"
           variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case20"
-              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case20/ bam $$PWD/$$CI_PROJECT_NAME;
+              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/empty-zero-reads.bam"
+              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/empty-zero-reads.bam bam $$PWD/$$CI_PROJECT_NAME;
 
 
         - if: $MATRIX_NAME == "xam-case21-excl-unclassified"
@@ -797,14 +800,31 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case25/bams/barcode01 --reference ${S3_TEST_DATA}/human_ref/chr10_14_20_22.fa --wf.force_alignment"
               AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/xam_ingress/case25/bams/barcode01 bam $$PWD/$$CI_PROJECT_NAME; grep -P "bam_alignment \(1\)\tCOMPLETED" $$PWD/$$CI_PROJECT_NAME/execution/trace.txt;
-        - if: $MATRIX_NAME == "xam-case26-alignment-empty-bam"
-          variables:
-              NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case26/ --reference test_data/fastq_ingress/case30/reference.fa.gz --sample just_header"
-              AFTER_NEXTFLOW_CMD: $TEST_CMD test_data/xam_ingress/case26/ bam $$PWD/$$CI_PROJECT_NAME;
         - if: $MATRIX_NAME == "s3-xam-case26-alignment-cram-out"
           variables:
               NF_WORKFLOW_OPTS: "--bam ${S3_TEST_DATA}/xam_ingress/case25/bams/barcode02 --reference ${S3_TEST_DATA}/human_ref/chr10_14_20_22.fa --output_xam_fmt cram"
               AFTER_NEXTFLOW_CMD: $TEST_CMD $S3_TEST_DATA/xam_ingress/case25/bams/barcode02 bam $$PWD/$$CI_PROJECT_NAME;
+
+        - if: $MATRIX_NAME == "xam-case27"
+          variables:
+            NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/empty-zero-bytes.bam"
+            ASSERT_NEXTFLOW_FAILURE: "1"
+            ASSERT_NEXTFLOW_FAILURE_REXP: "ValueError: file does not contain alignment data"
+        - if: $MATRIX_NAME == "xam-case28"
+          variables:
+            NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case28"
+            ASSERT_NEXTFLOW_FAILURE: "1"
+            ASSERT_NEXTFLOW_FAILURE_REXP: "Could not open alignment file: Exec format error:"
+        - if: $MATRIX_NAME == "xam-case29"
+          variables:
+            NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case29"
+            ASSERT_NEXTFLOW_FAILURE: "1"
+            ASSERT_NEXTFLOW_FAILURE_REXP: "Could not open alignment file: Exec format error:"
+        - if: $MATRIX_NAME == "xam-case30"
+          variables:
+            NF_WORKFLOW_OPTS: "--bam test_data/xam_ingress/case30"
+            ASSERT_NEXTFLOW_FAILURE: "1"
+            ASSERT_NEXTFLOW_FAILURE_REXP: "Could not open alignment file: Exec format error:"
 
 
         - if: $MATRIX_NAME == "unexpected-params"

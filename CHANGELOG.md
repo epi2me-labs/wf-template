@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v7.0.1]
+### Changed
+- Revert ingress to fatally exit when encountering malformed BAM input files during header checking.
+    - Added test cases to cover scenarios where malformed inputs are passed to ingress.
+
 ## [v7.0.0]
 ### Added
 - Optional alignment of input BAM or FASTQ reads using minimap2, managed by the ingress module.
